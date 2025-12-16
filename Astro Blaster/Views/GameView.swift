@@ -97,6 +97,28 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: HUD
 
     private let hud = SKLabelNode(fontNamed: "Menlo")
+    
+    // MARK: Highscore
+    
+    private var score = SKLabelNode(fontNamed: "Menlo")
+    private var highscoreLabel = SKLabelNode(fontNamed: "Menlo")
+    private var scoreValue: Int = 0
+    
+    var highscore = 0
+    
+    private let highscoreKey = "Highscore"
+    private func loadHighscore() {
+        highscore = UserDefaults.standard.integer(forKey: highscoreKey)
+    }
+    private func saveHighscore() {
+        UserDefaults.standard.set(highscore, forKey: highscoreKey)
+    }
+    private func updateHighscoreIfNeeded() {
+        if scoreValue > highscore {
+            highscore = scoreValue
+            saveHighscore()
+        }
+    }
 
     // MARK: Init
 
@@ -120,6 +142,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         // TODO: background images
         setupShip()
         setupHUD() // debugging
+        setupScore()
+        loadHighscore()
+    }
+    
+    override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        layoutScoreLabels()
     }
 
     // MARK: Setup
@@ -132,7 +161,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size)
         shipNode.physicsBody?.affectedByGravity = false // no gravity since the ship only moves horizontally
         shipNode.physicsBody?.categoryBitMask = PhysicsCategory.spaceship
-
+        
         // checks for enemy contact and then calls the corresponding delegate didBegin method
         // (in this case didBegin(_ contact:)
         // TODO: add collision with upgrade
@@ -154,6 +183,37 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         )
         hud.zPosition = 100
         addChild(hud)
+    }
+    
+    private func setupScore() {
+        score.fontSize = 24
+        score.fontColor = .white
+        score.horizontalAlignmentMode = .right
+        score.verticalAlignmentMode = .center
+        score.text = "Score: 0"
+        score.zPosition = 200
+        if score.parent == nil { addChild(score) }
+
+        highscoreLabel.fontSize = 16
+        highscoreLabel.fontColor = .white
+        highscoreLabel.horizontalAlignmentMode = .right
+        highscoreLabel.verticalAlignmentMode = .center
+        highscoreLabel.text = "Highscore: \(highscore)"
+        highscoreLabel.zPosition = 200
+        if highscoreLabel.parent == nil { addChild(highscoreLabel) }
+
+        layoutScoreLabels()
+    }
+    
+    private func layoutScoreLabels() {
+        score.position = CGPoint(
+            x: size.width / 2 - 10,
+            y: size.height / 2 - 70
+        )
+        highscoreLabel.position = CGPoint(
+            x: size.width / 2 - 10,
+            y: score.position.y - 26
+        )
     }
 
     // MARK: Difficulty
@@ -177,6 +237,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let delta = computeDeltaTime(currentTime: currentTime)
         elapsed += delta
+        
+        // Score: +1 every update
+        scoreValue += 1
+        score.text = "Score: \(scoreValue)"
+        updateHighscoreIfNeeded()
+        highscoreLabel.text = "Highscore: \(highscore)"
 
         fireLasers(currentTime)
         spawnEnemies(currentTime)
@@ -261,7 +327,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         node.physicsBody = SKPhysicsBody(circleOfRadius: half)
         node.physicsBody?.affectedByGravity = false
         node.physicsBody?.categoryBitMask = PhysicsCategory.enemy
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser // look for contact with laser
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser | PhysicsCategory.spaceship// look for contact with laser or spaceship
         node.physicsBody?.collisionBitMask = PhysicsCategory.none // no collisions
 
         addChild(node) // add to SKScene
@@ -286,13 +352,26 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             if let speed = node.userData?["speed"] as? CGFloat {
                 node.position.y -= speed * CGFloat(delta) // make the asteroids fall
             }
-            if node.position.y < -self.size.height / 2 - node.frame.height {
+            // check for top of asteroid
+            if node.position.y + node.frame.height / 2 < -self.size.height / 2 {
+                self.ship.health -= 1
                 node.removeFromParent() // delete if it went through
+                if(self.ship.health < 1) {
+                    self.ship.health = 0
+                    self.gameOver()
+                }
             }
         }
     }
 
     // MARK: Upgrades
+    
+    // weighted probability distrubution
+    private func chooseRandomUpgrade(_ num: Int) -> UpgradeType {
+        if num % 2 == 0 { return UpgradeType.rapidFire }
+        else if num % 3 == 0 { return UpgradeType.health }
+        return UpgradeType.dualShot
+    }
 
     private func spawnUpgrades(_ time: TimeInterval) {
         guard time - lastUpgradeDrop > nextUpgradeDelay else { return }
@@ -301,7 +380,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         nextUpgradeDelay = Double.random(in: 13...16)
 
         // omg look its a force unwrap (shiver me timbers)
-        let type = UpgradeType.allCases.randomElement()!
+        let type = chooseRandomUpgrade(Int.random(in: 1...50))
 
         // TODO: insert actual asset for upgrade
         let node = SKSpriteNode(color: .cyan, size: CGSize(width: 30, height: 30))
@@ -342,17 +421,42 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil // check if either is an enemy
         let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil // check if either is an upgrade
 
-        // since only laser makes contact, it must be one of the two
+        // check if laser made contact
         // TODO: check if one of the participants is the spaceship since it can also have contact with enemies, currently its treated like a laser
-        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : b
+        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : contact.bodyB.categoryBitMask == PhysicsCategory.laser ? b : nil
+        
+        // check if spaceship made contact
+        let spaceship = contact.bodyA.categoryBitMask == PhysicsCategory.spaceship ? a : contact.bodyB.categoryBitMask == PhysicsCategory.spaceship ? b : nil
 
         // if we hit an enemy (if enemy is not null)
         if let enemy = enemy {
-            flashWhite(enemy) // damage animation
+            if let spaceship = spaceship {
+
+                // Decrease ship health
+                ship.health -= 1
+
+                // visual feedback on the ship
+                flashWhite(spaceship)
+
+                // Remove the enemy so it does not deal repeated damage
+                enemy.removeFromParent()
+
+                // handle game over
+                if ship.health <= 0 {
+                    ship.health = 0
+                    gameOver()
+                }
+
+                return
+            }
+
+            // Laser enemy damage
+            flashWhite(enemy)
             if let hp = enemy.userData?["hp"] as? Int, hp > 1 {
-                enemy.userData?["hp"] = hp - 1 // if it still has HP afterwards, reduce it by one
+                enemy.userData?["hp"] = hp - 1
             } else {
-                enemy.removeFromParent() // delete if zero HP remaining
+                enemy.removeFromParent()
+                self.addScore(10)
             }
         }
 
@@ -361,10 +465,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
            let type = upgrade.userData?["type"] as? UpgradeType {
             ship.apply(type) // apply the upgrade
             upgrade.removeFromParent() // delete the node
+            self.addScore(100)
         }
 
-        // TODO: currently if the ship makes contact with an asteroid luckily the asteroid is b which delets the asteroid instead (do we sell this as a feature? XD)
-        laser.removeFromParent() // delete the laser
+        if let laser = laser {
+            laser.removeFromParent() // delete the laser
+        }
     }
 
     // MARK: Damage Feedback
@@ -415,6 +521,29 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             addChild(line)
             hudLines.append(line)
         }
+    }
+    
+    // add points to the score
+    private func addScore(_ points: Int) {
+        scoreValue += points
+        score.text = "Score: \(scoreValue)"
+        updateHighscoreIfNeeded()
+        highscoreLabel.text = "Highscore: \(highscore)"
+    }
+    
+    // MARK: Game Over Screen
+    
+    private func gameOver() {
+        isPaused = true   // stops update(_:), physics, actions
+
+        let label = SKLabelNode(fontNamed: "Menlo-Bold")
+        label.text = "GAME OVER"
+        label.fontSize = 48
+        label.fontColor = .white
+        label.position = CGPoint(x: 0, y: 0)
+        label.zPosition = 1000
+
+        addChild(label)
     }
 
     // MARK: Input
@@ -468,3 +597,4 @@ struct GameView: View {
 #Preview {
     GameView(maxDifficulty: 5)
 }
+
