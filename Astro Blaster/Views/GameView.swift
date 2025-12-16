@@ -5,7 +5,6 @@
 //  Created by Moritz Langenhan on 09.12.25.
 //
 
-
 import Foundation
 import SwiftUI
 import SpriteKit
@@ -116,7 +115,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // gets called when SKView adds or removes an interaction from its interaction array
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self // for detecting collisions
-        backgroundColor = .black // TODO: background images
+        backgroundColor = .black
+
+        // TODO: background images
         setupShip()
         setupHUD() // debugging
     }
@@ -131,7 +132,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size)
         shipNode.physicsBody?.affectedByGravity = false // no gravity since the ship only moves horizontally
         shipNode.physicsBody?.categoryBitMask = PhysicsCategory.spaceship
-        shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy // checks for enemy contact and then calls the corresponding delegate didBegin method (in this case didBegin(_ contact:) TODO: add collision with upgrade
+
+        // checks for enemy contact and then calls the corresponding delegate didBegin method
+        // (in this case didBegin(_ contact:)
+        // TODO: add collision with upgrade
+        shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy
+
         shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none // no physical collisions
 
         addChild(shipNode) // append it to the SKScene
@@ -159,7 +165,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     // MARK: Game Loop
-    
+
     // helper which computes passed time to account for different framerates
     private func computeDeltaTime(currentTime: TimeInterval) -> TimeInterval {
         let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0
@@ -168,10 +174,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func update(_ currentTime: TimeInterval) {
-        
+
         let delta = computeDeltaTime(currentTime: currentTime)
         elapsed += delta
-        
+
         fireLasers(currentTime)
         spawnEnemies(currentTime)
         spawnUpgrades(currentTime)
@@ -184,14 +190,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: Lasers
 
     private func fireLasers(_ time: TimeInterval) {
-        
+
         // only fire if enough time has passed (safety measure)
         guard time - lastFire >= ship.fireRate else { return }
         lastFire = time
 
         if ship.hasDualShot {
-            spawnLaser(asset: "BlasterschussLinks", xOffset: -12) // TODO: design choice
-            spawnLaser(asset: "BlasterschussRechts", xOffset: 12) // TODO: design choice
+            // TODO: design choice
+            spawnLaser(asset: "BlasterschussLinks", xOffset: -12)
+            // TODO: design choice
+            spawnLaser(asset: "BlasterschussRechts", xOffset: 12)
         } else {
             // use alternating assets
             let asset = shootLeftNext ? "BlasterschussLinks" : "BlasterschussRechts"
@@ -227,7 +235,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: Enemies
 
     private func spawnEnemies(_ time: TimeInterval) {
-        
+
         // only spawn when enough time is passed
         guard time - lastEnemySpawn > 1.0 else { return }
         lastEnemySpawn = time
@@ -292,8 +300,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         lastUpgradeDrop = time
         nextUpgradeDelay = Double.random(in: 13...16)
 
-        let type = UpgradeType.allCases.randomElement()! // omg look its a force unwrap (shiver me timbers)
-        let node = SKSpriteNode(color: .cyan, size: CGSize(width: 30, height: 30)) //TODO: insert actual asset for upgrade
+        // omg look its a force unwrap (shiver me timbers)
+        let type = UpgradeType.allCases.randomElement()!
+
+        // TODO: insert actual asset for upgrade
+        let node = SKSpriteNode(color: .cyan, size: CGSize(width: 30, height: 30))
         node.name = "upgrade"
         node.userData = ["type": type, "speed": CGFloat(80)]
 
@@ -330,7 +341,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil // check if either is an enemy
         let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil // check if either is an upgrade
-        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : b // since only laser makes contact, it must be one of the two TODO: check if one of the participants is the spaceship since it can also have contact with enemies, currently its treated like a laser
+
+        // since only laser makes contact, it must be one of the two
+        // TODO: check if one of the participants is the spaceship since it can also have contact with enemies, currently its treated like a laser
+        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : b
 
         // if we hit an enemy (if enemy is not null)
         if let enemy = enemy {
@@ -341,7 +355,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 enemy.removeFromParent() // delete if zero HP remaining
             }
         }
-        
+
         // if its an upgrade (if upgrade is not null)
         if let upgrade = upgrade,
            let type = upgrade.userData?["type"] as? UpgradeType {
@@ -349,7 +363,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             upgrade.removeFromParent() // delete the node
         }
 
-        laser.removeFromParent() // delete the laser //TODO: currently if the ship makes contact with an asteroid luckily the asteroid is b which delets the asteroid instead (do we sell this as a feature? XD)
+        // TODO: currently if the ship makes contact with an asteroid luckily the asteroid is b which delets the asteroid instead (do we sell this as a feature? XD)
+        laser.removeFromParent() // delete the laser
     }
 
     // MARK: Damage Feedback
@@ -453,4 +468,3 @@ struct GameView: View {
 #Preview {
     GameView(maxDifficulty: 5)
 }
-
