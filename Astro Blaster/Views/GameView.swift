@@ -26,6 +26,7 @@ enum UpgradeType: CaseIterable {
     case health
     case rapidFire
     case dualShot
+    case overdrive
 }
 
 // MARK: - Spaceship Model
@@ -44,6 +45,8 @@ struct Spaceship {
             fireRate = max(0.12, fireRate - 0.09)
         case .dualShot:
             hasDualShot = true
+        case .overdrive:
+            break
         }
     }
 }
@@ -93,6 +96,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // flag for alternate fire
     private var shootLeftNext = true
+    
+    // MARK: Active Upgrades
+
+    private var overdriveRemaining: TimeInterval = 0
+    private var overdriveBaseDuration: TimeInterval = 5.0
+    private let overdriveBonusDuration: TimeInterval = 2.0
+    private let minFireRate: TimeInterval = 0.12
+    private var preOverdriveFireRate: TimeInterval?
+    
+    private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
+    private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
 
     // MARK: HUD
 
@@ -142,8 +156,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         // TODO: background images
         setupShip()
         setupHUD() // debugging
+        setupOverdriveUI()
         setupScore()
         loadHighscore()
+        layoutOverdriveUI()
     }
     
     override func didChangeSize(_ oldSize: CGSize) {
@@ -205,6 +221,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         layoutScoreLabels()
     }
     
+    private func setupOverdriveUI() {
+        overdriveBackground.fillColor = .darkGray
+        overdriveBackground.strokeColor = .clear
+        overdriveBackground.zPosition = 300
+        overdriveBackground.isHidden = true
+
+        overdriveFill.fillColor = .cyan
+        overdriveFill.strokeColor = .clear
+        overdriveFill.zPosition = 301
+
+        overdriveBackground.addChild(overdriveFill)
+        addChild(overdriveBackground)
+    }
+
     private func layoutScoreLabels() {
         score.position = CGPoint(
             x: size.width / 2 - 10,
@@ -251,6 +281,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         moveEnemies(delta: delta)
         moveUpgrades(delta: delta)
         updateHUD()
+        updateOverdrive(delta: delta)
+        layoutOverdriveUI()
     }
 
     // MARK: Lasers
@@ -366,11 +398,28 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: Upgrades
     
+    // weights
+    private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
+        (.rapidFire, 0.7),
+        (.overdrive, 0.15),
+        (.health, 0.10),
+        (.dualShot, 0.05)
+    ]
+    
     // weighted probability distrubution
     private func chooseRandomUpgrade(_ num: Int) -> UpgradeType {
-        if num % 2 == 0 { return UpgradeType.rapidFire }
-        else if num % 3 == 0 { return UpgradeType.health }
-        return UpgradeType.dualShot
+        let roll = Double.random(in: 0...1)
+        var cumulative = 0.0
+
+        // roll for rapid fire first, then overdrive, ... (CDF principle)
+        for entry in upgradeWeights {
+            cumulative += entry.weight
+            if roll <= cumulative {
+                return entry.type
+            }
+        }
+
+        return .rapidFire // safe fallback
     }
 
     private func spawnUpgrades(_ time: TimeInterval) {
@@ -411,6 +460,42 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     // MARK: Collisions
+    
+    // helper for active upgrade overdrive
+    private func activateOverdrive() {
+        if overdriveRemaining > 0 {
+            overdriveRemaining += overdriveBonusDuration
+        } else {
+            preOverdriveFireRate = ship.fireRate
+            overdriveRemaining = overdriveBaseDuration
+            ship.fireRate = minFireRate
+        }
+
+        overdriveBackground.isHidden = false
+    }
+
+
+    // for active upgrade timings
+    private func updateOverdrive(delta: TimeInterval) {
+        guard overdriveRemaining > 0 else { return }
+
+        overdriveRemaining -= delta
+
+        let progress = max(0, overdriveRemaining) / overdriveBaseDuration
+        overdriveFill.xScale = CGFloat(progress)
+
+        if overdriveRemaining <= 0 {
+            overdriveRemaining = 0
+            overdriveBackground.isHidden = true
+
+            if let previous = preOverdriveFireRate {
+                ship.fireRate = previous
+                preOverdriveFireRate = nil
+            }
+        }
+
+    }
+
 
     // gets called when contact is recognized between contactTestBitMask and categoryBitMask (if AND is non-zero)
     func didBegin(_ contact: SKPhysicsContact) {
@@ -463,11 +548,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         // if its an upgrade (if upgrade is not null)
         if let upgrade = upgrade,
            let type = upgrade.userData?["type"] as? UpgradeType {
-            ship.apply(type) // apply the upgrade
-            upgrade.removeFromParent() // delete the node
+
+            switch type {
+            // if its an active upgrade
+            case .overdrive:
+                activateOverdrive()
+            // if its a passive upgrade
+            default:
+                ship.apply(type)
+            }
+
+            upgrade.removeFromParent()
             self.addScore(100)
         }
-
+        
         if let laser = laser {
             laser.removeFromParent() // delete the laser
         }
@@ -490,11 +584,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         // Remove old lines from previous frames
         hudLines.forEach { $0.removeFromParent() } // awesome cool smart sparse way of writing closures right
         hudLines.removeAll()
-
+        
         // count enemies and lasers currently within the SKScene
         let enemyCount = children.filter { $0.name == "enemy" }.count
         let laserCount = children.filter { $0.physicsBody?.categoryBitMask == PhysicsCategory.laser }.count
-
+        
         // logging
         let texts = [
             "Enemies: \(enemyCount)",
@@ -506,7 +600,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             "Fire Rate: \(String(format: "%.2f", ship.fireRate)) s",
             "Dual Shot: \(ship.hasDualShot)"
         ]
-
+        
         for (i, text) in texts.enumerated() {
             let line = SKLabelNode(fontNamed: "Menlo")
             line.text = text
@@ -530,6 +624,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         updateHighscoreIfNeeded()
         highscoreLabel.text = "Highscore: \(highscore)"
     }
+    
+    // helper for active upgrade UI
+    private func layoutOverdriveUI() {
+        overdriveBackground.position = CGPoint(
+            x: -size.width / 2 + 80,
+            y: shipNode.position.y + 40
+        )
+    }
+
     
     // MARK: Game Over Screen
     
