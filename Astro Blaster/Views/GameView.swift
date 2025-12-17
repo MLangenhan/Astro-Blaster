@@ -42,7 +42,7 @@ struct Spaceship {
         case .health:
             health += 1
         case .rapidFire:
-            fireRate = max(0.12, fireRate - 0.09)
+            fireRate = max(0.12, fireRate - 0.04)
         case .dualShot:
             hasDualShot = true
         case .overdrive:
@@ -168,6 +168,30 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     // MARK: Setup
+    
+    private var contrail: SKEmitterNode?
+    
+    func createContrail(at offsetX: CGFloat) -> SKEmitterNode {
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = SKTexture(imageNamed: "particle")
+        emitter.particleColor = .cyan
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBirthRate = 200
+        emitter.particleLifetime = 1.0
+        emitter.particleLifetimeRange = 0.2
+        emitter.particleSpeed = 200
+        emitter.particleSpeedRange = 40
+        emitter.particleAlpha = 0.7
+        emitter.particleAlphaRange = 0.2
+        emitter.particleAlphaSpeed = -0.7
+        emitter.particleScale = 0.03
+        emitter.particleScaleRange = 0.02
+        emitter.emissionAngle = -.pi / 2       // downward
+        emitter.emissionAngleRange = .pi / 8
+        emitter.targetNode = self               // render particles in scene coordinates
+        emitter.position = CGPoint(x: offsetX, y: -shipNode.size.height / 2 + 480)
+        return emitter
+    }
 
     private func setupShip() {
         shipNode.setScale(0.1)
@@ -186,6 +210,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none // no physical collisions
 
         addChild(shipNode) // append it to the SKScene
+        
+        // MARK: Contrail Setup
+        
+        // Left engine contrail
+        let leftEmitter = createContrail(at: -shipNode.size.width * 0.25)
+        shipNode.addChild(leftEmitter)
+
+        // Right engine contrail
+        let rightEmitter = createContrail(at: shipNode.size.width * 0.25)
+        shipNode.addChild(rightEmitter)
     }
 
     // debugging hud
@@ -400,8 +434,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // weights
     private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
-        (.rapidFire, 0.7),
-        (.overdrive, 0.15),
+        (.rapidFire, 0.55),
+        (.overdrive, 0.3),
         (.health, 0.10),
         (.dualShot, 0.05)
     ]
