@@ -11,7 +11,7 @@ import SwiftUI
 struct Astro_BlasterApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MapView()
         }
     }
 }
