@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import SpriteKit
+import Combine
 
 // MARK: - Physics Categories
 
@@ -28,6 +29,14 @@ enum UpgradeType: CaseIterable {
     case dualShot
     case overdrive
 }
+
+// MARK: - Game Action enum for navigation
+
+enum GameAction {
+    case restart
+    case exitToMap
+}
+
 
 // MARK: - Spaceship Model
 
@@ -72,7 +81,7 @@ struct Asteroid {
 
 // MARK: - Game Scene
 
-final class GameScene: SKScene, SKPhysicsContactDelegate {
+final class GameScene: SKScene, SKPhysicsContactDelegate, ObservableObject {
 
     // MARK: Configuration
 
@@ -127,12 +136,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func saveHighscore() {
         UserDefaults.standard.set(highscore, forKey: highscoreKey)
     }
+    
     private func updateHighscoreIfNeeded() {
         if scoreValue > highscore {
             highscore = scoreValue
             saveHighscore()
         }
     }
+    
+    // GameAction callback
+    var onGameAction: ((GameAction) -> Void)?
+    
+    @Published var isGameOver = false
 
     // MARK: Init
 
@@ -148,12 +163,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: Lifecycle
 
-    // gets called when SKView adds or removes an interaction from its interaction array
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self // for detecting collisions
         backgroundColor = .black
 
-        // TODO: background images
         setupShip()
         setupHUD() // debugging
         setupOverdriveUI()
@@ -186,9 +199,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         emitter.particleAlphaSpeed = -0.7
         emitter.particleScale = 0.03
         emitter.particleScaleRange = 0.02
-        emitter.emissionAngle = -.pi / 2       // downward
+        emitter.emissionAngle = -.pi / 2
         emitter.emissionAngleRange = .pi / 8
-        emitter.targetNode = self               // render particles in scene coordinates
+        emitter.targetNode = self
         emitter.position = CGPoint(x: offsetX, y: -shipNode.size.height / 2 + 480)
         return emitter
     }
@@ -199,30 +212,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
 
         shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size)
-        shipNode.physicsBody?.affectedByGravity = false // no gravity since the ship only moves horizontally
+        shipNode.physicsBody?.affectedByGravity = false
         shipNode.physicsBody?.categoryBitMask = PhysicsCategory.spaceship
-        
-        // checks for enemy contact and then calls the corresponding delegate didBegin method
-        // (in this case didBegin(_ contact:)
-        // TODO: add collision with upgrade
         shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy
+        shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none
 
-        shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none // no physical collisions
-
-        addChild(shipNode) // append it to the SKScene
+        addChild(shipNode)
         
-        // MARK: Contrail Setup
-        
-        // Left engine contrail
         let leftEmitter = createContrail(at: -shipNode.size.width * 0.25)
         shipNode.addChild(leftEmitter)
 
-        // Right engine contrail
         let rightEmitter = createContrail(at: shipNode.size.width * 0.25)
         shipNode.addChild(rightEmitter)
     }
 
-    // debugging hud
     private func setupHUD() {
         hud.fontSize = 12
         hud.horizontalAlignmentMode = .left
@@ -234,7 +237,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         hud.zPosition = 100
         addChild(hud)
     }
-    
+
     private func setupScore() {
         score.fontSize = 24
         score.fontColor = .white
@@ -254,7 +257,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         layoutScoreLabels()
     }
-    
+
     private func setupOverdriveUI() {
         overdriveBackground.fillColor = .darkGray
         overdriveBackground.strokeColor = .clear
@@ -283,14 +286,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: Difficulty
 
     private func difficulty() -> CGFloat {
-        let t = CGFloat(elapsed) // time elapsed since game start
-        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant)) // approaches maxDifficulty * 1 at around 300 seconds, smaller difficultyTimeConstant makes it harder since it approaches 1 earlier
-        return min(value, maxDifficulty) // only go up to maxDifficulty
+        let t = CGFloat(elapsed)
+        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant))
+        return min(value, maxDifficulty)
     }
 
     // MARK: Game Loop
 
-    // helper which computes passed time to account for different framerates
     private func computeDeltaTime(currentTime: TimeInterval) -> TimeInterval {
         let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0
         lastUpdateTime = currentTime
@@ -298,11 +300,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func update(_ currentTime: TimeInterval) {
-
+        // dont update if in game over screen
+        guard !isGameOver else { return }
         let delta = computeDeltaTime(currentTime: currentTime)
         elapsed += delta
-        
-        // Score: +1 every update
+
         scoreValue += 1
         score.text = "Score: \(scoreValue)"
         updateHighscoreIfNeeded()
@@ -318,7 +320,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         updateOverdrive(delta: delta)
         layoutOverdriveUI()
     }
-
+    
     // MARK: Lasers
 
     private func fireLasers(_ time: TimeInterval) {
@@ -563,7 +565,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 // handle game over
                 if ship.health <= 0 {
                     ship.health = 0
-                    gameOver()
+                    self.gameOver()
                 }
 
                 return
@@ -667,71 +669,167 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         )
     }
 
-    
     // MARK: Game Over Screen
-    
-    private func gameOver() {
-        isPaused = true   // stops update(_:), physics, actions
+        
+       private func gameOver() {
+           isGameOver = true
+           physicsWorld.speed = 0
+       }
+        
+       // MARK: Input
 
-        let label = SKLabelNode(fontNamed: "Menlo-Bold")
-        label.text = "GAME OVER"
-        label.fontSize = 48
-        label.fontColor = .white
-        label.position = CGPoint(x: 0, y: 0)
-        label.zPosition = 1000
+       func beginDrag() {
+           dragStartX = shipNode.position.x
+       }
 
-        addChild(label)
+       func dragShip(by deltaX: CGFloat) {
+           let proposedX = dragStartX + deltaX
+           let half = shipNode.size.width / 2
+
+           shipNode.position.x = min(
+               max(proposedX, -size.width / 2 + half),
+               size.width / 2 - half
+           )
+       }
+   }
+
+// MARK: - GameScene Reset
+
+extension GameScene {
+    func reset() {
+        // Reset basic state
+        ship = Spaceship()
+        elapsed = 0
+        lastFire = 0
+        lastUpdateTime = 0
+        lastEnemySpawn = 0
+        lastUpgradeDrop = 0
+        nextUpgradeDelay = Double.random(in: 13...16)
+        shootLeftNext = true
+        overdriveRemaining = 0
+        preOverdriveFireRate = nil
+        physicsWorld.speed = 1.0
+        isGameOver = false
+
+        // Reset ship position
+        shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
+
+        // Remove all enemies, upgrades, and lasers
+        enumerateChildNodes(withName: "*") { node, _ in
+            if let category = node.physicsBody?.categoryBitMask {
+                if category == PhysicsCategory.laser ||
+                   category == PhysicsCategory.enemy ||
+                   category == PhysicsCategory.upgrade {
+                    node.removeFromParent()
+                }
+            }
+        }
+
+        // Reset HUD and overdrive UI
+        scoreValue = 0
+        score.text = "Score: 0"
+        highscoreLabel.text = "Highscore: \(highscore)"
+        overdriveBackground.isHidden = true
+        layoutScoreLabels()
+        layoutOverdriveUI()
     }
 
-    // MARK: Input
-
-    func beginDrag() {
-        dragStartX = shipNode.position.x
-    }
-
-    func dragShip(by deltaX: CGFloat) {
-        let proposedX = dragStartX + deltaX
-        let half = shipNode.size.width / 2
-
-        // prevent clamping, dont let the ship go out of bounds
-        shipNode.position.x = min(
-            max(proposedX, -size.width / 2 + half),
-            size.width / 2 - half
-        )
-    }
 }
+
 
 // MARK: - SwiftUI View
 
 struct GameView: View {
+    let maxDifficulty: CGFloat
+    @Binding var isPresented: Bool
+    @StateObject private var scene: GameScene
 
-    private let scene: GameScene
+    init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
+        self.maxDifficulty = maxDifficulty
+        self._isPresented = isPresented
+        // Use StateObject's wrappedValue initializer
+        _scene = StateObject(wrappedValue: GameScene(maxDifficulty: maxDifficulty))
+    }
 
-    // set difficulty
-    init(maxDifficulty: CGFloat) {
-        self.scene = GameScene(maxDifficulty: maxDifficulty)
+    // A unified setup function to avoid code duplication
+    private func setupSceneInstance(_ sceneToSetup: GameScene, size: CGSize) {
+        sceneToSetup.size = size
+        sceneToSetup.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        sceneToSetup.scaleMode = .aspectFill
+        
+        sceneToSetup.onGameAction = { action in
+            switch action {
+            case .restart:
+                // handled via SwiftUI Button logic now
+                break
+            case .exitToMap:
+                isPresented = false
+            }
+        }
     }
 
     var body: some View {
         GeometryReader { geo in
-            SpriteView(scene: scene)
-                .ignoresSafeArea()
-                .statusBarHidden(true) // hide clock, wifi, ...
-                .gesture(
-                    DragGesture() // react to drag
-                        .onChanged { scene.dragShip(by: $0.translation.width) }
-                        .onEnded { _ in scene.beginDrag() }
-                )
-                .onAppear {
-                    scene.size = geo.size
-                    scene.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-                    scene.beginDrag()
+            ZStack {
+                SpriteView(scene: scene)
+                    .ignoresSafeArea()
+                    .statusBarHidden(true)
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                guard !scene.isGameOver else { return }
+                                
+                                // Checking against zero translation to trigger start of drag
+                                if value.translation.width == 0 {
+                                    // Logic used to call beginDrag here if it was the initial frame
+                                    scene.beginDrag()
+                                }
+                                scene.dragShip(by: value.translation.width)
+                            }
+                            .onEnded { _ in
+                                // Update position for next drag
+                                scene.beginDrag()
+                            }
+                    )
+                    .onAppear {
+                        setupSceneInstance(scene, size: geo.size)
+                    }
+
+                if scene.isGameOver {
+                    VStack(spacing: 30) {
+                        Text("GAME OVER")
+                            .font(.custom("Menlo-Bold", size: 48))
+                            .foregroundColor(.white)
+                        
+                        Button(action: {
+                            print("Restarting...")
+                            scene.reset() // <-- reset the scene in-place
+                        }) {
+                            Text("Restart")
+                                .font(.custom("Menlo", size: 24))
+                                .padding()
+                                .background(Color.cyan.opacity(0.2))
+                                .cornerRadius(10)
+                        }
+                        .foregroundColor(.cyan)
+
+                        Button(action: {
+                            print("Exiting...")
+                            isPresented = false
+                        }) {
+                            Text("Return to Map")
+                                .font(.custom("Menlo", size: 24))
+                        }
+                        .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.75))
                 }
+            }
         }
     }
 }
 
 #Preview {
-    GameView(maxDifficulty: 5)
+    GameView(maxDifficulty: 5, isPresented: .constant(true))
 }
-

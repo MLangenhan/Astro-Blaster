@@ -129,11 +129,10 @@ struct MapView: View {
         }
         .fullScreenCover(isPresented: $navigateToGameView) {
             //MARK:  This only Active If player is near the point!!! LATER ....
-            GameView(maxDifficulty: 5)
+            GameView(maxDifficulty: 5, isPresented: $navigateToGameView)
         }
     }
 }
-
 
 // MARK: - Preview
 #Preview {
