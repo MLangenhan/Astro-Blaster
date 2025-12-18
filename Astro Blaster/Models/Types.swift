@@ -1,5 +1,5 @@
 //
-//  UpgradeType 2.swift
+//  Types.swift
 //  Astro Blaster
 //
 //  Created by Moritz Langenhan on 18.12.25.

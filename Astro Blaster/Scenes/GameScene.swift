@@ -267,7 +267,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         nextUpgradeDelay = Double.random(in: 13...16)
 
         let type = chooseRandomUpgrade()
-        let node = SKSpriteNode(color: .cyan, size: CGSize(width: 30, height: 30))
+        let node = SKSpriteNode(imageNamed: "spacestation")
+        node.size = CGSize(width: 80, height: 80)
         node.name = "upgrade"
         node.userData = ["type": type, "speed": CGFloat(80)]
         node.position = CGPoint(x: 0, y: size.height / 2 + node.size.height)
