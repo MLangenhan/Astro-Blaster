@@ -99,6 +99,24 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         emitter.position = CGPoint(x: offsetX, y: -shipNode.size.height / 2 + 480)
         return emitter
     }
+    
+    func createUpgradeGlowCircle(radius: CGFloat = 50) -> SKShapeNode {
+        let glow = SKShapeNode(circleOfRadius: radius)
+        glow.strokeColor = .yellow
+        glow.lineWidth = 4
+        glow.fillColor = .clear
+        glow.alpha = 0.6
+        glow.zPosition = -1  // behind the upgrade
+        glow.glowWidth = 10
+
+        // Pulsate animation
+        let scaleUp = SKAction.scale(to: 1.2, duration: 0.8)
+        let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
+        let pulse = SKAction.repeatForever(.sequence([scaleUp, scaleDown]))
+        glow.run(pulse)
+        
+        return glow
+    }
 
     private func setupHUD() {
         hud.fontSize = 12
@@ -277,6 +295,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         node.physicsBody?.categoryBitMask = PhysicsCategory.upgrade
         node.physicsBody?.contactTestBitMask = PhysicsCategory.laser
         node.physicsBody?.collisionBitMask = PhysicsCategory.none
+        
+        // Add the glowing circle
+        let glow = createUpgradeGlowCircle(radius: 40)
+        node.addChild(glow)
+        
         addChild(node)
     }
 
