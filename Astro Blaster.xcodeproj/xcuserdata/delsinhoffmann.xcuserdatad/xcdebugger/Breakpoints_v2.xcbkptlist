@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "669D0A42-944A-4238-A20F-08233EB9CED0"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "055BC765-2221-4962-AE7F-87E17DE9BB9F"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../var/folders/6x/r5vcmf7j6d74z3n9_t_bcsk40000gn/T/swift-generated-sources/@__swiftmacro_13Astro_Blaster0023ArenaDetailsswift_elFCffMX84_0_33_A6402B51367A79B18C3D35ADF2CBCC2ALl7PreviewfMf_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "$s13Astro_Blaster0023ArenaDetailsswift_elFCffMX84_0_33_A6402B51367A79B18C3D35ADF2CBCC2ALl7PreviewfMf_15PreviewRegistryfMu_"
+            landmarkType = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B5EE1CF1-21D2-4CA5-A52D-7F68A69ABE31"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../var/folders/6x/r5vcmf7j6d74z3n9_t_bcsk40000gn/T/swift-generated-sources/@__swiftmacro_13Astro_Blaster0023ArenaDetailsswift_elFCffMX84_0_33_A6402B51367A79B18C3D35ADF2CBCC2ALl7PreviewfMf_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "2"
+            endingLineNumber = "2"
+            landmarkName = "$s13Astro_Blaster0023ArenaDetailsswift_elFCffMX84_0_33_A6402B51367A79B18C3D35ADF2CBCC2ALl7PreviewfMf_15PreviewRegistryfMu_"
+            landmarkType = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

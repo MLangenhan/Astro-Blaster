@@ -18,9 +18,15 @@ struct ArenaPlace: Identifiable {
 }
 
 
-
 // MARK: - Map View
 struct MapView: View {
+    
+    // MARK: - User Location
+    // Include LocationManager and check position
+    @StateObject private var locationManager: LocationManager
+    init(locationManager: LocationManager = LocationManager()) {
+        _locationManager = StateObject(wrappedValue: locationManager)
+    }
     
     // MARK: - State Properties
     @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
@@ -80,6 +86,15 @@ struct MapView: View {
                         }
                 }
             }
+            
+            // User-Location
+            if let userLocation = locationManager.userLocation {
+                Annotation("Du", coordinate: userLocation.coordinate) {
+                    Image(systemName: "location.fill")
+                        .foregroundColor(.blue)
+                        .font(.title2)
+                }
+            }
         }
         .mapStyle(.hybrid(
             elevation: .realistic,                          // Show realistic 3D map
@@ -118,7 +133,8 @@ struct MapView: View {
         .sheet(item: $selectedPlace) { place in
             ArenaDetails(
                 place: place,
-                onClose: { selectedPlace = nil},
+                userLocation: locationManager.userLocation,
+                onClose: { selectedPlace = nil },
                 onOpenFullScreen: {
                     // Close sheet
                     selectedPlace = nil
