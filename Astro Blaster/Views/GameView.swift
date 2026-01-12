@@ -37,6 +37,7 @@ struct GameView: View {
         GeometryReader { geo in
             ZStack {
                 SpriteView(scene: scene)
+                    .background(Color.black.opacity(0.3))
                     .ignoresSafeArea()
                     .statusBarHidden(true)
                     .gesture(
@@ -49,35 +50,35 @@ struct GameView: View {
                             .onEnded { _ in scene.beginDrag() }
                     )
                     .onAppear { setupScene(size: geo.size) }
-
                 if viewModel.isGameOver {
                     gameOverOverlay
                 }
             }
         }
     }
-
+    
     private var gameOverOverlay: some View {
         VStack(spacing: 30) {
             Text("GAME OVER")
-                .font(.custom("Menlo-Bold", size: 48))
+                .font(.custom("ArcadeInterlaced", size: 48))
                 .foregroundColor(.white)
+                .multilineTextAlignment(.center)
             
             Button(action: {
                 viewModel.resetGame()
                 scene.reset()
             }) {
                 Text("Restart")
-                    .font(.custom("Menlo", size: 24))
+                    .font(.custom("ArcadeInterlaced", size: 24))
                     .padding()
-                    .background(Color.cyan.opacity(0.2))
+                    .background(Color.green.opacity(0.2))
                     .cornerRadius(10)
             }
-            .foregroundColor(.cyan)
+            .foregroundColor(.green)
 
             Button(action: { isPresented = false }) {
                 Text("Return to Map")
-                    .font(.custom("Menlo", size: 24))
+                    .font(.custom("ArcadeInterlaced", size: 24))
             }
             .foregroundColor(.white)
         }

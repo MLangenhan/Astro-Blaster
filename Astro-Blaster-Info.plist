@@ -2,9 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleIdentifier</key>
+	<key>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;string&gt;fonts/ARCADE_I.TTF&lt;/string&gt;
+&lt;/plist&gt;
+</key>
 	<string></string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This game needs your location informations.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>ARCADE_I.TTF</string>
+	</array>
 </dict>
 </plist>

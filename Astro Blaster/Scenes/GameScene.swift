@@ -26,6 +26,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
     
+    
     // MARK: Active Upgrades
     private var overdriveRemaining: TimeInterval = 0
     private var overdriveBaseDuration: TimeInterval = 5.0
@@ -35,18 +36,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
     private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
+    
 
     // MARK: HUD & Score Labels
-    private let hud = SKLabelNode(fontNamed: "Menlo")
-    private var scoreLabel = SKLabelNode(fontNamed: "Menlo")
-    private var highscoreLabel = SKLabelNode(fontNamed: "Menlo")
+    private let hud = SKLabelNode(fontNamed: "ArcadeInterlaced")
+    private var scoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
+    private var highscoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
     private var hudLines: [SKLabelNode] = []
 
     // MARK: Lifecycle
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self // for detecting collisions
-        backgroundColor = .black
-
+        backgroundColor = .black.withAlphaComponent(0)
+        
         setupShip()
         setupHUD() // debugging
         setupOverdriveUI()
@@ -128,16 +130,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func setupScore() {
-        scoreLabel.fontSize = 24
+        scoreLabel.fontSize = 14
         scoreLabel.fontColor = .white
-        scoreLabel.horizontalAlignmentMode = .right
+        scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.verticalAlignmentMode = .center
         scoreLabel.zPosition = 200
         addChild(scoreLabel)
 
-        highscoreLabel.fontSize = 16
+        highscoreLabel.fontSize = 12
         highscoreLabel.fontColor = .white
-        highscoreLabel.horizontalAlignmentMode = .right
+        highscoreLabel.horizontalAlignmentMode = .left
         highscoreLabel.verticalAlignmentMode = .center
         highscoreLabel.zPosition = 200
         addChild(highscoreLabel)
@@ -146,11 +148,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func setupOverdriveUI() {
-        overdriveBackground.fillColor = .darkGray
+        overdriveBackground.fillColor = .white
         overdriveBackground.strokeColor = .clear
         overdriveBackground.zPosition = 300
         overdriveBackground.isHidden = true
-        overdriveFill.fillColor = .cyan
+        overdriveFill.fillColor = .green
         overdriveFill.strokeColor = .clear
         overdriveFill.zPosition = 301
         overdriveBackground.addChild(overdriveFill)
@@ -158,8 +160,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func layoutScoreLabels() {
-        scoreLabel.position = CGPoint(x: size.width / 2 - 10, y: size.height / 2 - 70)
-        highscoreLabel.position = CGPoint(x: size.width / 2 - 10, y: scoreLabel.position.y - 26)
+        scoreLabel.position = CGPoint(x: size.width / 8 - 200, y: size.height / 2 - 70)
+        highscoreLabel.position = CGPoint(x: scoreLabel.position.x, y: scoreLabel.position.y - 20)
     }
 
     private func difficulty() -> CGFloat {
@@ -177,7 +179,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         vm.updateScore(points: 1) // Passive score over time
         scoreLabel.text = "Score: \(vm.scoreValue)"
-        highscoreLabel.text = "Highscore: \(vm.highscore)"
+        highscoreLabel.text = "High: \(vm.highscore)"
 
         fireLasers(currentTime)
         spawnEnemies(currentTime)
@@ -267,6 +269,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: Upgrades
     private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
         (.rapidFire, 0.55), (.overdrive, 0.3), (.health, 0.10), (.dualShot, 0.05)
+        
     ]
 
     private func chooseRandomUpgrade() -> UpgradeType {
@@ -278,8 +281,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         return .rapidFire
     }
-
-    private func spawnUpgrades(_ time: TimeInterval) {
+    
+    func spawnUpgrades(_ time: TimeInterval) {
         guard time - lastUpgradeDrop > nextUpgradeDelay else { return }
         lastUpgradeDrop = time
         nextUpgradeDelay = Double.random(in: 13...16)
@@ -338,7 +341,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType {
-            if type == .overdrive { activateOverdrive() } else { ship.apply(type) }
+            if type == .overdrive {
+                activateOverdrive()
+            } else {
+                ship.apply(type)
+            }
             upgrade.removeFromParent()
             viewModel?.updateScore(points: 100)
         }
@@ -382,29 +389,35 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func updateHUD() {
         hudLines.forEach { $0.removeFromParent() }
         hudLines.removeAll()
-        let enemyCount = children.filter { $0.name == "enemy" }.count
-        let laserCount = children.filter { $0.physicsBody?.categoryBitMask == PhysicsCategory.laser }.count
+        //let enemyCount = children.filter { $0.name == "enemy" }.count
+        //let laserCount = children.filter { $0.physicsBody?.categoryBitMask == PhysicsCategory.laser }.count
+        let overdriveText = (overdriveRemaining > 0) ? "Overdrive Active" : "";
         let texts = [
+            /*
             "Enemies: \(enemyCount)", "Lasers: \(laserCount)",
             "Difficulty: \(String(format: "%.2f", difficulty()))", "",
             "Ship Stats:", "Health: \(ship.health)",
             "Fire Rate: \(String(format: "%.2f", ship.fireRate)) s", "Dual Shot: \(ship.hasDualShot)"
+             */
+            "\(overdriveText)"
         ]
+        //DO NOT REMOVE THE I; TO MAKE DEVSTATS VISIBLE WHEN NEEDED!!!
         for (i, text) in texts.enumerated() {
-            let line = SKLabelNode(fontNamed: "Menlo")
+            let line = SKLabelNode(fontNamed: "ArcadeInterlaced")
             line.text = text
+            line.fontColor = .green
             line.fontSize = 12
-            line.horizontalAlignmentMode = .left
-            line.verticalAlignmentMode = .top
-            line.position = CGPoint(x: -size.width / 2 + 10, y: size.height / 2 - 10 - CGFloat(i) * 14)
+            line.horizontalAlignmentMode = .center
+            line.position.y = -(frame.height/4 + 25)
             line.zPosition = 100
             addChild(line)
             hudLines.append(line)
         }
     }
 
+
     private func layoutOverdriveUI() {
-        overdriveBackground.position = CGPoint(x: -size.width / 2 + 80, y: shipNode.position.y + 40)
+        overdriveBackground.position = CGPoint(x: frame.midX, y: frame.height - frame.height * 1.3)
     }
 
     private func gameOver() {
