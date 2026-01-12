@@ -30,7 +30,7 @@ struct MapView: View {
     
     // MARK: - State Properties
     @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
-    @State private var navigateToGameView = false       // Trigger full-screen navigation
+    @State private var navigateToGameView = false       // Trigger full-screen navigation of GameView
     @State private var hasInitialCenterMoved = false    // Initial move of map only once
     
     // MARK: - Initial Map Camera Position
@@ -140,6 +140,7 @@ struct MapView: View {
                     selectedPlace = nil
                     // Set state for GameView
                     navigateToGameView = true
+                    // Set state for HighScore Table
                 }
             )
         }

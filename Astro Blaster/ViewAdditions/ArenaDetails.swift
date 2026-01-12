@@ -16,6 +16,31 @@ struct ArenaDetails: View {
     let userLocation: CLLocation?           // User location
     let onClose: () -> Void                 // Action to close the sheet
     let onOpenFullScreen: () -> Void        // New closure for full-screen navigation
+    
+    @State private var showHighscores = false //Show highscore panel
+    
+    var playerscores: [String: Int] = [
+        "Alice": 95,
+        "Bob": 82,
+        "Charlie": 90,
+        "Nova": 1870,
+        "Liam": 1240,
+        "Mila": 760,
+        "Orion": 1995,
+        "Zara": 430,
+        "Elias": 1580,
+        "Luna": 980,
+        "Kai": 310,
+        "Freya": 1425,
+        "Noah": 670,
+        "Ivy": 185,
+        "Atlas": 1320,
+        "Mason": 540,
+        "Aria": 1760,
+        "Finn": 860,
+        "Skye": 225,
+        "Leo": 1490
+    ]
 
     // Calculate distance to arena
     private var distanceInMeters: Double? {
@@ -51,16 +76,6 @@ struct ArenaDetails: View {
             
             Divider()
             
-            // MARK: - Check if User near the arena
-            if let distance = distanceInMeters {
-                Text(isInRange
-                     ? "🟢 In Reichweite (\(Int(distance)) m)"
-                     : "🔴 Zu weit entfernt (\(Int(distance)) m)")
-                    .font(.headline)
-            } else {
-                Text("📍 Standort wird ermittelt …")
-            }
-            
             // MARK: - Buttons
             HStack(spacing: 20) {
                 
@@ -75,10 +90,31 @@ struct ArenaDetails: View {
                 .disabled(!isInRange)
                 .buttonStyle(.borderedProminent)
             }
+            
+            // MARK: - Check if User near the arena
+            if let distance = distanceInMeters {
+                Text(isInRange
+                     ? "🟢 In Reichweite (\(Int(distance)) m)"
+                     : "🔴 Zu weit entfernt (\(Int(distance)) m)")
+                    .font(.headline)
+            } else {
+                Text("📍 Standort wird ermittelt …")
+            }
+            
+            Divider()
+            
+            Button("Highscores of \(place.name)") {
+                showHighscores = true
+            }
+            .buttonStyle(.borderedProminent)
+            
         }
         .padding()
         // Limit the sheet height
         .presentationDetents([.height(250)])
+        .fullScreenCover(isPresented: $showHighscores) {
+            HighscoreView(place: place, scores: playerscores)
+        }
     }
 }
 
