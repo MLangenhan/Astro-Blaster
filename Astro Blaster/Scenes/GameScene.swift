@@ -16,6 +16,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: State
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
+    private var upgradeText = ""
     private var ship = Spaceship()
     private var dragStartX: CGFloat = 0
     private var lastFire: TimeInterval = 0
@@ -187,6 +188,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         moveEnemies(delta: delta)
         moveUpgrades(delta: delta)
         updateHUD()
+        printUpgradesToScreen()
         updateOverdrive(delta: delta)
         layoutOverdriveUI()
     }
@@ -286,8 +288,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard time - lastUpgradeDrop > nextUpgradeDelay else { return }
         lastUpgradeDrop = time
         nextUpgradeDelay = Double.random(in: 13...16)
-
         let type = chooseRandomUpgrade()
+        
         let node = SKSpriteNode(imageNamed: "spacestation")
         node.size = CGSize(width: 80, height: 80)
         node.name = "upgrade"
@@ -304,6 +306,21 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         node.addChild(glow)
         
         addChild(node)
+    }
+    
+    private func printUpgradesToScreen() {
+        hudLines.forEach { $0.removeFromParent() }
+        hudLines.removeAll()
+        let line = SKLabelNode(fontNamed: "ArcadeInterlaced")
+        line.text = upgradeText
+        line.fontColor = .green
+        line.fontSize = 12
+        line.horizontalAlignmentMode = .center
+        line.position.x = 0
+        line.position.y = -(frame.height/4 + 25)
+        line.zPosition = 100
+        addChild(line)
+        hudLines.append(line)
     }
 
     private func moveUpgrades(delta: TimeInterval) {
@@ -342,9 +359,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType {
             if type == .overdrive {
+                upgradeText = "Overdrive Active"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.upgradeText = ""
+                }
                 activateOverdrive()
             } else {
                 ship.apply(type)
+                upgradeText = "\(type) Gained"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.upgradeText = ""
+                }
             }
             upgrade.removeFromParent()
             viewModel?.updateScore(points: 100)
@@ -397,9 +422,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             "Enemies: \(enemyCount)", "Lasers: \(laserCount)",
             "Difficulty: \(String(format: "%.2f", difficulty()))", "",
             "Ship Stats:", "Health: \(ship.health)",
-            "Fire Rate: \(String(format: "%.2f", ship.fireRate)) s", "Dual Shot: \(ship.hasDualShot)"
+            "Fire Rate: \(String(format: "%.2f", ship.fireRate)) s", "Dual Shot: \(ship.hasDualShot)",
              */
-            "\(overdriveText)"
+            ""
         ]
         //DO NOT REMOVE THE I; TO MAKE DEVSTATS VISIBLE WHEN NEEDED!!!
         for (i, text) in texts.enumerated() {
@@ -408,7 +433,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             line.fontColor = .green
             line.fontSize = 12
             line.horizontalAlignmentMode = .center
-            line.position.y = -(frame.height/4 + 25)
+            line.position = CGPoint(x: 0, y: -10 - 12 * CGFloat(i))
             line.zPosition = 100
             addChild(line)
             hudLines.append(line)
@@ -457,3 +482,5 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         layoutOverdriveUI()
     }
 }
+
+

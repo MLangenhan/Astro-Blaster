@@ -8,7 +8,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "26645F9C-23EE-4EAF-84F5-DF72AF0EBBD8"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Astro Blaster/ViewAdditions/ArenaDetails.swift"
@@ -16,7 +16,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "58"
             endingLineNumber = "58"
-            landmarkName = "body"
+            landmarkName = "isInRange"
             landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
