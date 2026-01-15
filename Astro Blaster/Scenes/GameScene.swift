@@ -18,6 +18,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: Audio
     private var backgroundMusic: AVAudioPlayer?
     private var didPlayIntro = false
+    
+    private let playLaser = SKAction.playSoundFileNamed("laser.wav", waitForCompletion: false)
+    private let playGameOver = SKAction.playSoundFileNamed("gameover.mp3", waitForCompletion: false)
+    private let playDamage = SKAction.playSoundFileNamed("damage.wav", waitForCompletion: false)
 
     // MARK: State
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
@@ -259,6 +263,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             spawnLaser(asset: asset, xOffset: shootLeftNext ? -30 : 30)
             shootLeftNext.toggle()
         }
+        self.run(playLaser)
     }
 
     private func spawnLaser(asset: String, xOffset: CGFloat) {
@@ -404,10 +409,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             if let spaceship = spaceship {
                 ship.health -= 1
                 flashWhite(spaceship)
+                self.run(playDamage)
                 enemy.removeFromParent()
                 if ship.health <= 0 { self.gameOver() }
                 return
             }
+            let playHit = SKAction.playSoundFileNamed("hit\(Int.random(in: 1...3)).wav", waitForCompletion: false)
+            self.run(playHit)
             flashWhite(enemy)
             if let hp = enemy.userData?["hp"] as? Int, hp > 1 {
                 enemy.userData?["hp"] = hp - 1
@@ -555,6 +563,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         ship.health = 0
         viewModel?.setGameOver()
         backgroundMusic?.stop()
+        self.run(playGameOver)
         physicsWorld.speed = 0
     }
 
