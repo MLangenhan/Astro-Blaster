@@ -7,12 +7,17 @@
 
 import SpriteKit
 import SwiftUI
+import AVFoundation
 
-final class GameScene: SKScene, SKPhysicsContactDelegate {
+final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
 
     // MARK: Configuration
     private let difficultyTimeConstant: CGFloat = 90.0 // ~5 min to plateau
     weak var viewModel: GameViewModel?
+    
+    // MARK: Audio
+    private var backgroundMusic: AVAudioPlayer?
+    private var didPlayIntro = false
 
     // MARK: State
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
@@ -53,6 +58,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.contactDelegate = self // for detecting collisions
         backgroundColor = .black.withAlphaComponent(0)
         
+        playBackgroundMusic()
         setupShip()
         setupHUD() // debugging
         setupOverdriveUI()
@@ -470,7 +476,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         hudLines.removeAll()
         //let enemyCount = children.filter { $0.name == "enemy" }.count
         //let laserCount = children.filter { $0.physicsBody?.categoryBitMask == PhysicsCategory.laser }.count
-        let overdriveText = (overdriveRemaining > 0) ? "Overdrive Active" : "";
+        //let overdriveText = (overdriveRemaining > 0) ? "Overdrive Active" : "";
         let texts = [
             /*
             "Enemies: \(enemyCount)", "Lasers: \(laserCount)",
@@ -494,9 +500,55 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-
     private func layoutOverdriveUI() {
         overdriveBackground.position = CGPoint(x: frame.midX, y: frame.height - frame.height * 1.3)
+    }
+    
+    // MARK: - Play Audio
+    private func playBackgroundMusic() {
+        guard !didPlayIntro else { return }
+
+        guard let url = Bundle.main.url(
+            forResource: "backgroundMusicStart",
+            withExtension: "wav"
+        ) else {
+            print("Intro file not found")
+            return
+        }
+
+        do {
+            backgroundMusic = try AVAudioPlayer(contentsOf: url)
+            backgroundMusic?.delegate = self
+            backgroundMusic?.numberOfLoops = 0
+            backgroundMusic?.prepareToPlay()
+            backgroundMusic?.play()
+            didPlayIntro = true
+        } catch {
+            print("Failed to play intro music")
+        }
+    }
+    
+    private func playLoopingMusic() {
+        guard let url = Bundle.main.url(
+            forResource: "backgroundMusicLoop",
+            withExtension: "wav"
+        ) else {
+            print("Loop file not found")
+            return
+        }
+
+        do {
+            backgroundMusic = try AVAudioPlayer(contentsOf: url)
+            backgroundMusic?.numberOfLoops = -1
+            backgroundMusic?.prepareToPlay()
+            backgroundMusic?.play()
+        } catch {
+            print("Failed to play looping music")
+        }
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        playLoopingMusic()
     }
 
     private func gameOver() {
