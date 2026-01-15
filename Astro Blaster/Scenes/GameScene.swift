@@ -16,6 +16,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: State
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
+    private let health1 = SKSpriteNode(imageNamed: "heart")
+    private let health2 = SKSpriteNode(imageNamed: "heart")
+    private let health3 = SKSpriteNode(imageNamed: "heart")
     private var upgradeText = ""
     private var ship = Spaceship()
     private var dragStartX: CGFloat = 0
@@ -189,6 +192,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         moveEnemies(delta: delta)
         moveUpgrades(delta: delta)
         updateHUD()
+        updateHealth()
         printUpgradesToScreen()
         updateOverdrive(delta: delta)
         layoutOverdriveUI()
@@ -198,6 +202,42 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0
         lastUpdateTime = currentTime
         return delta
+    }
+    
+    private func updateHealth() {
+        health1.removeFromParent()
+        health2.removeFromParent()
+        health3.removeFromParent()
+        if ship.health == 3 {
+            health1.setScale(0.02)
+            health1.zRotation = 0
+            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
+            addChild(health1)
+            health2.setScale(0.02)
+            health2.zRotation = 0
+            health2.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 20 , y: scoreLabel.position.y - 40)
+            addChild(health2)
+            health3.setScale(0.02)
+            health3.zRotation = 0
+            health3.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 40 , y: scoreLabel.position.y - 40)
+            addChild(health3)
+        } else if ship.health == 2 {
+            health1.setScale(0.02)
+            health1.zRotation = 0
+            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
+            addChild(health1)
+            health2.setScale(0.02)
+            health2.zRotation = 0
+            health2.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 20 , y: scoreLabel.position.y - 40)
+            addChild(health2)
+        } else if ship.health == 1 {
+            health1.setScale(0.02)
+            health1.zRotation = 0
+            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
+            addChild(health1)
+        } else {
+            
+        }
     }
 
     // MARK: Lasers
