@@ -21,7 +21,7 @@ struct Asteroid {
         Asteroid(
             health: max(1, Int(difficulty * 0.8)),
             speed: 60 + difficulty * 20,
-            scale: 0.045,
+            scale: 0.025,
             asset: "asteroid\(Int.random(in: 1...7))"
         )
     }

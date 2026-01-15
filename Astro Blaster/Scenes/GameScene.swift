@@ -64,7 +64,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: Setup functions
     private func setupShip() {
-        shipNode.setScale(0.1)
+        shipNode.setScale(0.066)
         shipNode.zRotation = .pi
         shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
         shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size)
@@ -216,7 +216,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func spawnLaser(asset: String, xOffset: CGFloat) {
         let laser = SKSpriteNode(imageNamed: asset)
-        laser.setScale(0.05)
+        laser.setScale(0.03)
         laser.position = CGPoint(x: shipNode.position.x + xOffset, y: shipNode.position.y + shipNode.size.height / 2)
         laser.physicsBody = SKPhysicsBody(rectangleOf: laser.size)
         laser.physicsBody?.velocity = CGVector(dx: 0, dy: 900)
@@ -240,7 +240,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let half = node.size.width / 2
         let minX = -size.width / 2 + half
         let maxX = size.width / 2 - half
-        node.position = CGPoint(x: CGFloat.random(in: minX...maxX), y: size.height / 2 + node.size.height)
+        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height)
         node.userData = ["hp": asteroid.health, "speed": asteroid.speed]
         node.physicsBody = SKPhysicsBody(circleOfRadius: half)
         node.physicsBody?.affectedByGravity = false
@@ -277,7 +277,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func chooseRandomUpgrade() -> UpgradeType {
         let roll = Double.random(in: 0...1)
         var cumulative = 0.0
-        for entry in upgradeWeights {
+        // store weights for dynamic filtering
+        var filteredUpgrades = upgradeWeights
+        
+        // dont get dual shot twice since its a persistent upgrade
+        if ship.hasDualShot {
+            filteredUpgrades.removeLast()
+        }
+        
+        // for simplicity with the design
+        if ship.health == 3 {
+            filteredUpgrades.remove(at: 2)
+        }
+        
+        for entry in filteredUpgrades {
             cumulative += entry.weight
             if roll <= cumulative { return entry.type }
         }
