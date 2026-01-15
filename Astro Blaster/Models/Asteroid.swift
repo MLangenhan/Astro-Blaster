@@ -19,9 +19,9 @@ struct Asteroid {
     // generate random asteroids based on game state
     static func random(difficulty: CGFloat) -> Asteroid {
         Asteroid(
-            health: max(1, Int(difficulty * 0.8)),
-            speed: 60 + difficulty * 20,
-            scale: 0.025,
+            health: 1,
+            speed: min(600, 60 + difficulty * 40),
+            scale: CGFloat(Float.random(in: 0.025...0.05)),
             asset: "asteroid\(Int.random(in: 1...7))"
         )
     }

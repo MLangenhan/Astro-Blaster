@@ -172,6 +172,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         return min(value, maxDifficulty)
     }
 
+    // MARK: - Update
     override func update(_ currentTime: TimeInterval) {
         guard let vm = viewModel, !vm.isGameOver else { return }
         
