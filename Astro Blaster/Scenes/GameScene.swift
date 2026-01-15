@@ -17,11 +17,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // MARK: Audio
     private var backgroundMusic: AVAudioPlayer?
+    private var sfxPlayers: [AVAudioPlayer] = []
     private var didPlayIntro = false
-    
-    private let playLaser = SKAction.playSoundFileNamed("laser.wav", waitForCompletion: false)
-    private let playGameOver = SKAction.playSoundFileNamed("gameover.mp3", waitForCompletion: false)
-    private let playDamage = SKAction.playSoundFileNamed("damage.wav", waitForCompletion: false)
 
     // MARK: State
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
@@ -50,6 +47,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
     private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
     
+    // MARK: Background
+    private let background1 = SKSpriteNode(imageNamed: "backgroundTop")
+    private let background2 = SKSpriteNode(imageNamed: "backgroundMid")
+    private let background3 = SKSpriteNode(imageNamed: "backgroundBottom")
 
     // MARK: HUD & Score Labels
     private let hud = SKLabelNode(fontNamed: "ArcadeInterlaced")
@@ -68,6 +69,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         setupOverdriveUI()
         setupScore()
         layoutOverdriveUI()
+        setupBackground()
     }
     
     override func didChangeSize(_ oldSize: CGSize) {
@@ -133,6 +135,42 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         
         return glow
     }
+    
+    private var backgroundScrollSpeed: CGFloat {
+        guard let vm = viewModel, !vm.isGameOver else { return 0 }
+        return 40 + difficulty() * 20   // scales with difficulty
+    }
+    
+    private func scrollBackground(delta: TimeInterval) {
+        let move = backgroundScrollSpeed * CGFloat(delta)
+
+        background1.position.y -= move
+        background2.position.y -= move
+        background3.position.y -= move
+
+        let height = background2.size.height
+
+        for bg in [background1, background2, background3] {
+            if bg.position.y <= -height {
+                bg.position.y += height * 3
+            }
+        }
+    }
+    
+    private func setupBackground() {
+        background2.position = CGPoint(x: 0, y: 0)
+        background1.position = CGPoint(x: 0, y: background2.size.height)
+        background3.position = CGPoint(x: 0, y: -background2.size.height)
+
+        background1.zPosition = -200
+        background2.zPosition = -200
+        background3.zPosition = -200
+
+        addChild(background1)
+        addChild(background2)
+        addChild(background3)
+    }
+
 
     private func setupHUD() {
         hud.fontSize = 12
@@ -206,6 +244,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         printUpgradesToScreen()
         updateOverdrive(delta: delta)
         layoutOverdriveUI()
+        scrollBackground(delta: delta)
     }
 
     private func computeDeltaTime(currentTime: TimeInterval) -> TimeInterval {
@@ -263,7 +302,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             spawnLaser(asset: asset, xOffset: shootLeftNext ? -30 : 30)
             shootLeftNext.toggle()
         }
-        self.run(playLaser)
+        playSFX("laser.wav", volume: 0.2)
     }
 
     private func spawnLaser(asset: String, xOffset: CGFloat) {
@@ -409,13 +448,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             if let spaceship = spaceship {
                 ship.health -= 1
                 flashWhite(spaceship)
-                self.run(playDamage)
+                playSFX("damage.wav", volume: 0.4)
                 enemy.removeFromParent()
                 if ship.health <= 0 { self.gameOver() }
                 return
             }
-            let playHit = SKAction.playSoundFileNamed("hit\(Int.random(in: 1...3)).wav", waitForCompletion: false)
-            self.run(playHit)
+            playSFX("hit\(Int.random(in: 1...3)).wav", volume: 0.3)
             flashWhite(enemy)
             if let hp = enemy.userData?["hp"] as? Int, hp > 1 {
                 enemy.userData?["hp"] = hp - 1
@@ -558,12 +596,25 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         playLoopingMusic()
     }
+    
+    // MARK: Sound Effects
+    private func playSFX(_ file: String, volume: Float = 1.0) {
+        // Using SKAction.playSoundFileNamed for short, one-shot sound effects
+        let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
+        run(playAction)
+    }
+    
+    func audioSFXPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        if let index = sfxPlayers.firstIndex(of: player) {
+            sfxPlayers.remove(at: index)
+        }
+    }
 
     private func gameOver() {
         ship.health = 0
         viewModel?.setGameOver()
         backgroundMusic?.stop()
-        self.run(playGameOver)
+        playSFX("gameover.mp3", volume: 0.6)
         physicsWorld.speed = 0
     }
 
@@ -587,6 +638,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         overdriveRemaining = 0
         preOverdriveFireRate = nil
         physicsWorld.speed = 1.0
+        playBackgroundMusic()
         shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
         enumerateChildNodes(withName: "*") { node, _ in
             if let cat = node.physicsBody?.categoryBitMask, [PhysicsCategory.laser, PhysicsCategory.enemy, PhysicsCategory.upgrade].contains(cat) {
@@ -598,5 +650,4 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         layoutOverdriveUI()
     }
 }
-
 
