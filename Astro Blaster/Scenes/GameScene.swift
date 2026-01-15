@@ -515,7 +515,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             print("Intro file not found")
             return
         }
-
+        
         do {
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
             backgroundMusic?.delegate = self
@@ -554,6 +554,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private func gameOver() {
         ship.health = 0
         viewModel?.setGameOver()
+        backgroundMusic?.stop()
         physicsWorld.speed = 0
     }
 
