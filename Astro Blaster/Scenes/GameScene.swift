@@ -36,6 +36,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var lastUpgradeDrop: TimeInterval = 0
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
+    /// Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
+    private var nextUpgradeSpawnAt: TimeInterval?
     
     // MARK: Active Upgrades
     private var overdriveRemaining: TimeInterval = 0
@@ -249,7 +251,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         for heart in hearts {
             heart.setScale(0.02)
             heart.zRotation = 0
-            heart.zPosition = 200
+            heart.zPosition = 200 // foreground
             addChild(heart)
         }
         layoutHearts()
@@ -302,6 +304,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
         elapsed += delta // counts elapsed time to keep track of how long its been played
 
+        // Schedule the first upgrade spawn relative to the first scene tick to avoid immediate spawn due to large absolute currentTime
+        if nextUpgradeSpawnAt == nil {
+            nextUpgradeSpawnAt = currentTime + Double.random(in: 13...16)
+        }
+
         vm.updateScore(points: 1) // Passive score over time
         scoreLabel.text = "Score: \(vm.scoreValue)"
         highscoreLabel.text = "High: \(vm.highscore)"
@@ -309,7 +316,14 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         // updating the game state
         fireLasers(currentTime)
         spawnEnemies(currentTime)
-        spawnUpgrades(currentTime)
+        
+        // Spawn an upgrade only when the absolute clock reaches the scheduled time
+        if let scheduled = nextUpgradeSpawnAt, currentTime >= scheduled {
+            spawnUpgrades(currentTime)
+            // Reschedule the next upgrade spawn relative to the current time
+            nextUpgradeSpawnAt = currentTime + Double.random(in: 13...16)
+        }
+        
         moveEnemies(delta: delta)
         moveUpgrades(delta: delta)
         updateHUD()
@@ -336,75 +350,85 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Lasers
     private func fireLasers(_ time: TimeInterval) {
-        guard time - lastFire >= ship.fireRate else { return }
+        guard time - lastFire >= ship.fireRate else { return } // only fire after "fireRate" amount of time has passed
         lastFire = time
 
+        // if dualshot upgrade is unlocked shoot both lasers at the same time
         if ship.hasDualShot {
             spawnLaser(asset: "BlasterschussLinks", xOffset: -12)
             spawnLaser(asset: "BlasterschussRechts", xOffset: 12)
         } else {
-            let asset = shootLeftNext ? "BlasterschussLinks" : "BlasterschussRechts"
+            let asset = shootLeftNext ? "BlasterschussLinks" : "BlasterschussRechts" // alternating fire based on shootLeftNext flag
             spawnLaser(asset: asset, xOffset: shootLeftNext ? -30 : 30)
             shootLeftNext.toggle()
         }
-        playSFX("laser.wav", volume: 0.2)
+        playSFX("laser.wav", volume: 0.2) // laser sound effect
     }
 
+    // the laser logic (that sounds fire)
     private func spawnLaser(asset: String, xOffset: CGFloat) {
         let laser = SKSpriteNode(imageNamed: asset)
         laser.setScale(0.03)
-        laser.position = CGPoint(x: shipNode.position.x + xOffset, y: shipNode.position.y + shipNode.size.height / 2)
-        laser.physicsBody = SKPhysicsBody(rectangleOf: laser.size)
-        laser.physicsBody?.velocity = CGVector(dx: 0, dy: 900)
-        laser.physicsBody?.affectedByGravity = false
-        laser.physicsBody?.categoryBitMask = PhysicsCategory.laser
-        laser.physicsBody?.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.upgrade
-        laser.physicsBody?.collisionBitMask = PhysicsCategory.none
+        laser.position = CGPoint(x: shipNode.position.x + xOffset, y: shipNode.position.y + shipNode.size.height / 2) // place based on xOffset
+        laser.physicsBody = SKPhysicsBody(rectangleOf: laser.size) // laser is rectangle anyways
+        laser.physicsBody?.velocity = CGVector(dx: 0, dy: 900) // how fast
+        laser.physicsBody?.affectedByGravity = false // lasers dont fall
+        laser.physicsBody?.categoryBitMask = PhysicsCategory.laser // im a laser
+        laser.physicsBody?.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.upgrade // looking for contact with enemies or upgrades
+        laser.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting on collisions
         addChild(laser)
-        laser.run(.sequence([.wait(forDuration: 2.0), .removeFromParent()]))
+        laser.run(.sequence([.wait(forDuration: 2.0), .removeFromParent()])) // remove laser from canvas after 2 seconds (off-screen by then) to prevent memory leaks
     }
 
     // MARK: Enemies
     private func spawnEnemies(_ time: TimeInterval) {
-        guard time - lastEnemySpawn > 1.0 else { return }
+        guard time - lastEnemySpawn > 1.0 else { return } // spawn enemies once a second TODO: spawn enemies in random intervals
         lastEnemySpawn = time
 
-        let asteroid = Asteroid.random(difficulty: difficulty())
+        let asteroid = Asteroid.random(difficulty: difficulty()) // choose a random asteroid
         let node = SKSpriteNode(imageNamed: asteroid.asset)
         node.name = "enemy"
         node.setScale(asteroid.scale)
+        
+        // different dimensions since we have different asteroids
         let half = node.size.width / 2
         let minX = -size.width / 2 + half
         let maxX = size.width / 2 - half
-        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height)
-        node.userData = ["hp": asteroid.health, "speed": asteroid.speed]
-        node.physicsBody = SKPhysicsBody(circleOfRadius: half)
-        node.physicsBody?.affectedByGravity = false
-        node.physicsBody?.categoryBitMask = PhysicsCategory.enemy
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser | PhysicsCategory.spaceship
-        node.physicsBody?.collisionBitMask = PhysicsCategory.none
+        
+        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height) // spawn at top of screen with 15px right and left to not spawn it partially off-screen
+        node.userData = ["hp": asteroid.health, "speed": asteroid.speed] // asteroid stats
+        node.physicsBody = SKPhysicsBody(circleOfRadius: half) // radial body since the assets are round-ish
+        node.physicsBody?.affectedByGravity = false // were in space (im some sort of a scientist myself)
+        node.physicsBody?.categoryBitMask = PhysicsCategory.enemy // im an enemy
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser | PhysicsCategory.spaceship // looking for contact with laser or spaceship
+        node.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting on collisions
         addChild(node)
 
+        // falling animation
         let direction: CGFloat = Bool.random() ? 1 : -1
         let rotations = CGFloat.random(in: 0.5...1.0)
         let fallDuration = size.height / asteroid.speed
         node.run(.rotate(byAngle: direction * rotations * .pi * 2, duration: TimeInterval(fallDuration)))
     }
 
+    // to make it look like the ship flies towards them
     private func moveEnemies(delta: TimeInterval) {
+        // get all SpriteKit children with name "enemy"
         enumerateChildNodes(withName: "enemy") { node, _ in
             if let speed = node.userData?["speed"] as? CGFloat {
-                node.position.y -= speed * CGFloat(delta)
+                node.position.y -= speed * CGFloat(delta) // fall down
             }
+            // if asteroid slips through, take damage
             if node.position.y + node.frame.height / 2 < -self.size.height / 2 {
                 self.ship.health -= 1
-                node.removeFromParent()
-                if self.ship.health <= 0 { self.gameOver() }
+                node.removeFromParent() // prevent memory leaks
+                if self.ship.health <= 0 { self.gameOver() } // game over
             }
         }
     }
 
     // MARK: Upgrades
+    // probability distribution of the upgrades
     private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
         (.rapidFire, 0.55), (.overdrive, 0.3), (.health, 0.10), (.dualShot, 0.05)
         
@@ -426,17 +450,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             filteredUpgrades.remove(at: 2)
         }
         
+        // return the first upgrade weight that cumulatively added up (is that a word?) is smaller than the roll
         for entry in filteredUpgrades {
             cumulative += entry.weight
             if roll <= cumulative { return entry.type }
         }
-        return .rapidFire
+        return .rapidFire // default if something fails
     }
     
     func spawnUpgrades(_ time: TimeInterval) {
-        guard time - lastUpgradeDrop > nextUpgradeDelay else { return }
-        lastUpgradeDrop = time
-        nextUpgradeDelay = Double.random(in: 13...16)
+        // Timing for upgrade spawns is managed in update.
+        
         let type = chooseRandomUpgrade()
         
         let node = SKSpriteNode(imageNamed: "spacestation")
@@ -673,6 +697,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         lastEnemySpawn = 0
         lastUpgradeDrop = 0
         nextUpgradeDelay = Double.random(in: 13...16)
+        // Clear absolute upgrade spawn schedule; it will be re-initialized on first update tick
+        nextUpgradeSpawnAt = nil
         shootLeftNext = true
         overdriveRemaining = 0
         preOverdriveFireRate = nil
