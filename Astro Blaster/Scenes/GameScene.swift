@@ -721,6 +721,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         overdriveRemaining = 0
         preOverdriveFireRate = nil
         physicsWorld.speed = 1.0
+        didPlayIntro = false
         playBackgroundMusic()
         shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
         enumerateChildNodes(withName: "*") { node, _ in
