@@ -17,16 +17,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // MARK: Audio
     private var backgroundMusic: AVAudioPlayer?
-    private var sfxPlayers: [AVAudioPlayer] = []
     private var didPlayIntro = false
-
-    // MARK: State
+    
+    // MARK: Assets
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
+    private var ship = Spaceship()
     private let health1 = SKSpriteNode(imageNamed: "heart")
     private let health2 = SKSpriteNode(imageNamed: "heart")
     private let health3 = SKSpriteNode(imageNamed: "heart")
+
+    // MARK: State
     private var upgradeText = ""
-    private var ship = Spaceship()
     private var dragStartX: CGFloat = 0
     private var lastFire: TimeInterval = 0
     private var lastUpdateTime: TimeInterval = 0
@@ -36,21 +37,25 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
     
-    
     // MARK: Active Upgrades
     private var overdriveRemaining: TimeInterval = 0
     private var overdriveBaseDuration: TimeInterval = 5.0
     private let overdriveBonusDuration: TimeInterval = 2.0
     private let minFireRate: TimeInterval = 0.12
     private var preOverdriveFireRate: TimeInterval?
-    
     private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
     private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
     
     // MARK: Background
+    // spread into 3 since the original pic is 10000px in height and SK only supports up to 4096px
     private let background1 = SKSpriteNode(imageNamed: "backgroundTop")
     private let background2 = SKSpriteNode(imageNamed: "backgroundMid")
     private let background3 = SKSpriteNode(imageNamed: "backgroundBottom")
+    // since the bottom one with the earth shouldnt reappear
+    private var loopingBackgrounds: [SKSpriteNode] {
+        [background1, background2]
+    }
+
 
     // MARK: HUD & Score Labels
     private let hud = SKLabelNode(fontNamed: "ArcadeInterlaced")
@@ -59,10 +64,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var hudLines: [SKLabelNode] = []
 
     // MARK: Lifecycle
+    
+    // gets called when the scene gets created
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self // for detecting collisions
-        backgroundColor = .black.withAlphaComponent(0)
         
+        // needs to be done only once
         playBackgroundMusic()
         setupShip()
         setupHUD() // debugging
@@ -72,6 +79,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         setupBackground()
     }
     
+    // consistency when scene size changes
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         layoutScoreLabels()
@@ -80,49 +88,53 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: Setup functions
     private func setupShip() {
         shipNode.setScale(0.066)
-        shipNode.zRotation = .pi
+        shipNode.zRotation = .pi // asset is the wrong way around
         shipNode.position = CGPoint(x: 0, y: -size.height * 0.4)
-        shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size)
-        shipNode.physicsBody?.affectedByGravity = false
-        shipNode.physicsBody?.categoryBitMask = PhysicsCategory.spaceship
-        shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy
-        shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none
+        shipNode.physicsBody = SKPhysicsBody(rectangleOf: shipNode.size) // set hitbox to rectangle of own size
+        shipNode.physicsBody?.affectedByGravity = false // spaceships dont fall down
+        shipNode.physicsBody?.categoryBitMask = PhysicsCategory.spaceship // im a spaceship
+        shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy // im looking for contact with enemies
+        shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none // dont care for collisions
 
+        // add to scene
         addChild(shipNode)
         
+        // create contrail animation
         let leftEmitter = createContrail(at: -shipNode.size.width * 0.25)
         shipNode.addChild(leftEmitter)
         let rightEmitter = createContrail(at: shipNode.size.width * 0.25)
         shipNode.addChild(rightEmitter)
     }
 
+    // particle shenanigans
     func createContrail(at offsetX: CGFloat) -> SKEmitterNode {
         let emitter = SKEmitterNode()
-        emitter.particleTexture = SKTexture(imageNamed: "particle")
+        emitter.particleTexture = SKTexture(imageNamed: "particle") // particle "asset"
         emitter.particleColor = .cyan
-        emitter.particleColorBlendFactor = 1.0
+        emitter.particleColorBlendFactor = 1.0 // amount of particles
         emitter.particleBirthRate = 200
-        emitter.particleLifetime = 1.0
-        emitter.particleLifetimeRange = 0.2
+        emitter.particleLifetime = 1.0 // in seconds
+        emitter.particleLifetimeRange = 0.2 // 0.8 to 1.2 seconds lifetime
         emitter.particleSpeed = 200
-        emitter.particleSpeedRange = 40
-        emitter.particleAlpha = 0.7
-        emitter.particleAlphaRange = 0.2
-        emitter.particleAlphaSpeed = -0.7
+        emitter.particleSpeedRange = 40 // 160 to 240 speed
+        emitter.particleAlpha = 0.7 // basically brightness in percent
+        emitter.particleAlphaRange = 0.2 // .5 to .9 alpha
+        emitter.particleAlphaSpeed = -0.7 // decrease alpha by .7 per second to fade it out
         emitter.particleScale = 0.03
-        emitter.particleScaleRange = 0.02
-        emitter.emissionAngle = -.pi / 2
-        emitter.emissionAngleRange = .pi / 8
-        emitter.targetNode = self
+        emitter.particleScaleRange = 0.02 // .01 to .05 scale
+        emitter.emissionAngle = -.pi / 2 // flow down
+        emitter.emissionAngleRange = .pi / 8 // not calculating the range for this...
+        emitter.targetNode = self // append to GameScene
         emitter.position = CGPoint(x: offsetX, y: -shipNode.size.height / 2 + 480)
         return emitter
     }
     
+    // glow circle around the upgrade
     func createUpgradeGlowCircle(radius: CGFloat = 50) -> SKShapeNode {
-        let glow = SKShapeNode(circleOfRadius: radius)
+        let glow = SKShapeNode(circleOfRadius: radius) // circle
         glow.strokeColor = .yellow
         glow.lineWidth = 4
-        glow.fillColor = .clear
+        glow.fillColor = .clear // inside transparent
         glow.alpha = 0.6
         glow.zPosition = -1  // behind the upgrade
         glow.glowWidth = 10
@@ -131,37 +143,67 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         let scaleUp = SKAction.scale(to: 1.2, duration: 0.8)
         let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
         let pulse = SKAction.repeatForever(.sequence([scaleUp, scaleDown]))
-        glow.run(pulse)
+        glow.run(pulse) // run the animation on the glow node
         
         return glow
     }
     
+    // how fast does the background scroll
     private var backgroundScrollSpeed: CGFloat {
-        guard let vm = viewModel, !vm.isGameOver else { return 0 }
+        guard let vm = viewModel, !vm.isGameOver else { return 0 } // only if viemodel is connected and not game over
         return 40 + difficulty() * 20   // scales with difficulty
     }
     
+    // well its scrolls the background
     private func scrollBackground(delta: TimeInterval) {
         let move = backgroundScrollSpeed * CGFloat(delta)
 
-        background1.position.y -= move
-        background2.position.y -= move
-        background3.position.y -= move
+        // Move all backgrounds
+        [background1, background2, background3].forEach {
+            $0.position.y -= move
+        }
 
-        let height = background2.size.height
+        // Recycle only looping backgrounds
+        for bg in loopingBackgrounds {
 
-        for bg in [background1, background2, background3] {
-            if bg.position.y <= -height {
-                bg.position.y += height * 3
+            // Fully below the screen?
+            if bg.position.y + bg.size.height / 2 < -size.height / 2 {
+
+                // Find the current top-most looping background
+                let topMostY = loopingBackgrounds
+                    .map { $0.position.y + $0.size.height / 2 }
+                    .max() ?? 0
+
+                // Place this background above it
+                bg.position.y = topMostY + bg.size.height / 2
             }
         }
     }
     
     private func setupBackground() {
-        background2.position = CGPoint(x: 0, y: 0)
-        background1.position = CGPoint(x: 0, y: background2.size.height)
-        background3.position = CGPoint(x: 0, y: -background2.size.height)
 
+        let h1 = background1.size.height
+        let h2 = background2.size.height
+        let h3 = background3.size.height
+
+        // Place bottom image so it is visible at boot
+        background3.position = CGPoint(
+            x: 0,
+            y: -size.height / 2 + h3 / 2
+        )
+
+        // Stack upwards
+        background2.position = CGPoint(
+            x: 0,
+            y: background3.position.y + h3 / 2 + h2 / 2
+        )
+
+        background1.position = CGPoint(
+            x: 0,
+            y: background2.position.y + h2 / 2 + h1 / 2
+        )
+
+        // move to background
         background1.zPosition = -200
         background2.zPosition = -200
         background3.zPosition = -200
@@ -171,7 +213,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         addChild(background3)
     }
 
-
+    // debugging
     private func setupHUD() {
         hud.fontSize = 12
         hud.horizontalAlignmentMode = .left
@@ -186,19 +228,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         scoreLabel.fontColor = .white
         scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.verticalAlignmentMode = .center
-        scoreLabel.zPosition = 200
+        scoreLabel.zPosition = 200 // foreground
         addChild(scoreLabel)
 
         highscoreLabel.fontSize = 12
         highscoreLabel.fontColor = .white
         highscoreLabel.horizontalAlignmentMode = .left
         highscoreLabel.verticalAlignmentMode = .center
-        highscoreLabel.zPosition = 200
+        highscoreLabel.zPosition = 200 // foreground
         addChild(highscoreLabel)
 
         layoutScoreLabels()
     }
 
+    // UI Timer for non-persistent upgrade
     private func setupOverdriveUI() {
         overdriveBackground.fillColor = .white
         overdriveBackground.strokeColor = .clear
@@ -206,28 +249,34 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         overdriveBackground.isHidden = true
         overdriveFill.fillColor = .green
         overdriveFill.strokeColor = .clear
-        overdriveFill.zPosition = 301
+        overdriveFill.zPosition = 301 // foremostground (is that even a word?)
         overdriveBackground.addChild(overdriveFill)
         addChild(overdriveBackground)
     }
 
+    // score and highscore
     private func layoutScoreLabels() {
         scoreLabel.position = CGPoint(x: size.width / 8 - 200, y: size.height / 2 - 70)
         highscoreLabel.position = CGPoint(x: scoreLabel.position.x, y: scoreLabel.position.y - 20)
     }
 
+    // MARK: Game Scale
+    
+    // game scaling over time
     private func difficulty() -> CGFloat {
         let t = CGFloat(elapsed)
         let maxDifficulty = viewModel?.maxDifficulty ?? 5.0
-        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant))
-        return min(value, maxDifficulty)
+        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant)) // plateaus at around maxDifficulty
+        return min(value, maxDifficulty) // only up to maxDifficulty
     }
 
     // MARK: - Update
+    
+    // gets called once per frame
     override func update(_ currentTime: TimeInterval) {
-        guard let vm = viewModel, !vm.isGameOver else { return }
+        guard let vm = viewModel, !vm.isGameOver else { return } // check for viewmodel and if not game over
         
-        let delta = computeDeltaTime(currentTime: currentTime)
+        let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
         elapsed += delta
 
         vm.updateScore(points: 1) // Passive score over time
@@ -602,12 +651,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         // Using SKAction.playSoundFileNamed for short, one-shot sound effects
         let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
         run(playAction)
-    }
-    
-    func audioSFXPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        if let index = sfxPlayers.firstIndex(of: player) {
-            sfxPlayers.remove(at: index)
-        }
     }
 
     private func gameOver() {
