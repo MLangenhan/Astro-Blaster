@@ -62,6 +62,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var scoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
     private var highscoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
     private var hudLines: [SKLabelNode] = []
+    private var hearts: [SKSpriteNode] = []
 
     // MARK: Lifecycle
     
@@ -75,6 +76,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         setupHUD() // debugging
         setupOverdriveUI()
         setupScore()
+        setupHearts()
         layoutOverdriveUI()
         setupBackground()
     }
@@ -182,6 +184,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     private func setupBackground() {
 
+        // different sizes since we had to crop it and im no surgeon
         let h1 = background1.size.height
         let h2 = background2.size.height
         let h3 = background3.size.height
@@ -189,18 +192,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         // Place bottom image so it is visible at boot
         background3.position = CGPoint(
             x: 0,
-            y: -size.height / 2 + h3 / 2
+            y: -size.height / 2 + h3 / 2 // since anchor point is in the middle
         )
 
         // Stack upwards
         background2.position = CGPoint(
             x: 0,
-            y: background3.position.y + h3 / 2 + h2 / 2
+            y: background3.position.y + h3 / 2 + h2 / 2 // ontop of background3
         )
 
         background1.position = CGPoint(
             x: 0,
-            y: background2.position.y + h2 / 2 + h1 / 2
+            y: background2.position.y + h2 / 2 + h1 / 2 // ontop of background2
         )
 
         // move to background
@@ -240,6 +243,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
         layoutScoreLabels()
     }
+    
+    private func setupHearts() {
+        hearts = [health1, health2, health3]
+        for heart in hearts {
+            heart.setScale(0.02)
+            heart.zRotation = 0
+            heart.zPosition = 200
+            addChild(heart)
+        }
+        layoutHearts()
+    }
 
     // UI Timer for non-persistent upgrade
     private func setupOverdriveUI() {
@@ -259,14 +273,23 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         scoreLabel.position = CGPoint(x: size.width / 8 - 200, y: size.height / 2 - 70)
         highscoreLabel.position = CGPoint(x: scoreLabel.position.x, y: scoreLabel.position.y - 20)
     }
+    
+    private func layoutHearts() {
+        // Position relative to score label
+        let startX = scoreLabel.position.x + health1.size.width / 2
+        let y = scoreLabel.position.y - 40
+        for (i, heart) in hearts.enumerated() {
+            heart.position = CGPoint(x: startX + CGFloat(i) * 20, y: y)
+        }
+    }
 
     // MARK: Game Scale
     
-    // game scaling over time
+    // game scaling difficulty over time
     private func difficulty() -> CGFloat {
         let t = CGFloat(elapsed)
-        let maxDifficulty = viewModel?.maxDifficulty ?? 5.0
-        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant)) // plateaus at around maxDifficulty
+        let maxDifficulty = viewModel?.maxDifficulty ?? 5.0 // passed by viewmodel
+        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant)) // plateaus at maxDifficulty
         return min(value, maxDifficulty) // only up to maxDifficulty
     }
 
@@ -277,12 +300,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         guard let vm = viewModel, !vm.isGameOver else { return } // check for viewmodel and if not game over
         
         let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
-        elapsed += delta
+        elapsed += delta // counts elapsed time to keep track of how long its been played
 
         vm.updateScore(points: 1) // Passive score over time
         scoreLabel.text = "Score: \(vm.scoreValue)"
         highscoreLabel.text = "High: \(vm.highscore)"
 
+        // updating the game state
         fireLasers(currentTime)
         spawnEnemies(currentTime)
         spawnUpgrades(currentTime)
@@ -291,50 +315,22 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         updateHUD()
         updateHealth()
         printUpgradesToScreen()
-        updateOverdrive(delta: delta)
+        updateOverdrive(delta: delta) // non-persistent upgrade
         layoutOverdriveUI()
         scrollBackground(delta: delta)
     }
 
+    // account for different framerates
     private func computeDeltaTime(currentTime: TimeInterval) -> TimeInterval {
-        let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0
-        lastUpdateTime = currentTime
+        let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0 // since lastUpdateTime is initialized with zero, we need to update it at least once with a default fps value since the delta would otherwise be negativew which adds too many difficulties
+        lastUpdateTime = currentTime // for next comparison
         return delta
     }
     
+    // toggles visibility of hearts based on ships health
     private func updateHealth() {
-        health1.removeFromParent()
-        health2.removeFromParent()
-        health3.removeFromParent()
-        if ship.health == 3 {
-            health1.setScale(0.02)
-            health1.zRotation = 0
-            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
-            addChild(health1)
-            health2.setScale(0.02)
-            health2.zRotation = 0
-            health2.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 20 , y: scoreLabel.position.y - 40)
-            addChild(health2)
-            health3.setScale(0.02)
-            health3.zRotation = 0
-            health3.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 40 , y: scoreLabel.position.y - 40)
-            addChild(health3)
-        } else if ship.health == 2 {
-            health1.setScale(0.02)
-            health1.zRotation = 0
-            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
-            addChild(health1)
-            health2.setScale(0.02)
-            health2.zRotation = 0
-            health2.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 + 20 , y: scoreLabel.position.y - 40)
-            addChild(health2)
-        } else if ship.health == 1 {
-            health1.setScale(0.02)
-            health1.zRotation = 0
-            health1.position = CGPoint(x: scoreLabel.position.x + health1.size.width / 2 , y: scoreLabel.position.y - 40)
-            addChild(health1)
-        } else {
-            
+        for (index, heart) in hearts.enumerated() {
+            heart.isHidden = index >= ship.health
         }
     }
 
