@@ -185,29 +185,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     private func setupBackground() {
-
-        // different sizes since we had to crop it and im no surgeon
-        let h1 = background1.size.height
-        let h2 = background2.size.height
-        let h3 = background3.size.height
-
-        // Place bottom image so it is visible at boot
-        background3.position = CGPoint(
-            x: 0,
-            y: -size.height / 2 + h3 / 2 // since anchor point is in the middle
-        )
-
-        // Stack upwards
-        background2.position = CGPoint(
-            x: 0,
-            y: background3.position.y + h3 / 2 + h2 / 2 // ontop of background3
-        )
-
-        background1.position = CGPoint(
-            x: 0,
-            y: background2.position.y + h2 / 2 + h1 / 2 // ontop of background2
-        )
-
         // move to background
         background1.zPosition = -200
         background2.zPosition = -200
@@ -216,6 +193,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         addChild(background1)
         addChild(background2)
         addChild(background3)
+        
+        layoutBackground()
     }
 
     // debugging
@@ -283,6 +262,30 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         for (i, heart) in hearts.enumerated() {
             heart.position = CGPoint(x: startX + CGFloat(i) * 20, y: y)
         }
+    }
+    
+    private func layoutBackground() {
+        // different sizes since we had to crop it and im no surgeon
+        let h1 = background1.size.height
+        let h2 = background2.size.height
+        let h3 = background3.size.height
+        
+        // Place bottom image so it is visible at boot
+        background3.position = CGPoint(
+            x: 0,
+            y: -size.height / 2 + h3 / 2 // since anchor point is in the middle
+        )
+
+        // Stack upwards
+        background2.position = CGPoint(
+            x: 0,
+            y: background3.position.y + h3 / 2 + h2 / 2 // ontop of background3
+        )
+
+        background1.position = CGPoint(
+            x: 0,
+            y: background2.position.y + h2 / 2 + h1 / 2 // ontop of background2
+        )
     }
 
     // MARK: Game Scale
@@ -732,6 +735,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         overdriveBackground.isHidden = true
         layoutScoreLabels()
         layoutOverdriveUI()
+        layoutBackground()
     }
 }
-
