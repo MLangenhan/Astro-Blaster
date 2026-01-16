@@ -459,20 +459,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     func spawnUpgrades(_ time: TimeInterval) {
-        // Timing for upgrade spawns is managed in update.
+        // Timing for upgrade spawns is managed in update
         
         let type = chooseRandomUpgrade()
-        
         let node = SKSpriteNode(imageNamed: "spacestation")
         node.size = CGSize(width: 80, height: 80)
         node.name = "upgrade"
-        node.userData = ["type": type, "speed": CGFloat(80)]
-        node.position = CGPoint(x: 0, y: size.height / 2 + node.size.height)
-        node.physicsBody = SKPhysicsBody(rectangleOf: node.size)
-        node.physicsBody?.affectedByGravity = false
-        node.physicsBody?.categoryBitMask = PhysicsCategory.upgrade
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser
-        node.physicsBody?.collisionBitMask = PhysicsCategory.none
+        node.userData = ["type": type, "speed": CGFloat(80)] // upgrade stats
+        node.position = CGPoint(x: 0, y: size.height / 2 + node.size.height) // spawn at the top
+        node.physicsBody = SKPhysicsBody(rectangleOf: node.size) // hitbox
+        node.physicsBody?.affectedByGravity = false // same as enemies
+        node.physicsBody?.categoryBitMask = PhysicsCategory.upgrade // im an upgrade
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser // looking for contact with laser
+        node.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting to collisions
         
         // Add the glowing circle
         let glow = createUpgradeGlowCircle(radius: 40)
@@ -482,20 +481,21 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     private func printUpgradesToScreen() {
-        hudLines.forEach { $0.removeFromParent() }
+        hudLines.forEach { $0.removeFromParent() } // clear previous message
         hudLines.removeAll()
-        let line = SKLabelNode(fontNamed: "ArcadeInterlaced")
+        let line = SKLabelNode(fontNamed: "ArcadeInterlaced") // custom font
         line.text = upgradeText
         line.fontColor = .green
         line.fontSize = 12
         line.horizontalAlignmentMode = .center
         line.position.x = 0
         line.position.y = -(frame.height/4 + 25)
-        line.zPosition = 100
+        line.zPosition = 100 // foreground
         addChild(line)
-        hudLines.append(line)
+        hudLines.append(line) // append message
     }
 
+    // same as move enemies
     private func moveUpgrades(delta: TimeInterval) {
         enumerateChildNodes(withName: "upgrade") { node, _ in
             if let speed = node.userData?["speed"] as? CGFloat {
@@ -506,86 +506,94 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
 
     // MARK: Collisions
-    func didBegin(_ contact: SKPhysicsContact) {
+    // this gets called when contact happens between 2 parties, e.g. laser and enemy
+    func didBegin(_ contact: SKPhysicsContact) { // contact stores both parties
+        // which parties caused the contact
         guard let a = contact.bodyA.node, let b = contact.bodyB.node else { return }
-        let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil
-        let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil
-        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : contact.bodyB.categoryBitMask == PhysicsCategory.laser ? b : nil
-        let spaceship = contact.bodyA.categoryBitMask == PhysicsCategory.spaceship ? a : contact.bodyB.categoryBitMask == PhysicsCategory.spaceship ? b : nil
+        let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil // is one of them an enemy
+        let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil // is one of them an upgrade
+        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : contact.bodyB.categoryBitMask == PhysicsCategory.laser ? b : nil // lasers dont have a name, thats why we check by category
+        let spaceship = contact.bodyA.categoryBitMask == PhysicsCategory.spaceship ? a : contact.bodyB.categoryBitMask == PhysicsCategory.spaceship ? b : nil // spaceship does not have a name, so we check for category
 
-        if let enemy = enemy {
-            if let spaceship = spaceship {
-                ship.health -= 1
-                flashWhite(spaceship)
-                playSFX("damage.wav", volume: 0.4)
-                enemy.removeFromParent()
-                if ship.health <= 0 { self.gameOver() }
+        if let enemy = enemy { // if theres an enemy involved
+            if let spaceship = spaceship { // and a spaceship
+                ship.health -= 1 // take damage
+                flashWhite(spaceship) // damage animation
+                playSFX("damage.wav", volume: 0.4) // damage sound effect
+                enemy.removeFromParent() // prevent memory leaks
+                if ship.health <= 0 { self.gameOver() } // check for game over
                 return
             }
-            playSFX("hit\(Int.random(in: 1...3)).wav", volume: 0.3)
-            flashWhite(enemy)
-            if let hp = enemy.userData?["hp"] as? Int, hp > 1 {
+            playSFX("hit\(Int.random(in: 1...3)).wav", volume: 0.3) // since enemy only checks for contact with either spaceship or asteroid, if it isnt the spaceship it must be an asteroid, so we play one of three hit sound effects
+            flashWhite(enemy) // damage animation
+            if let hp = enemy.userData?["hp"] as? Int, hp > 1 { // deprecated, asteroids could have more hp but we opted more towards speedier asteroids instead for increased difficulty. Still nice to have for the future
                 enemy.userData?["hp"] = hp - 1
             } else {
-                enemy.removeFromParent()
-                viewModel?.updateScore(points: 10)
+                enemy.removeFromParent() // prevent memory leaks and destroy asteroid
+                viewModel?.updateScore(points: 10) // give credit
             }
         }
 
-        if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType {
-            if type == .overdrive {
-                upgradeText = "Overdrive Active"
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    self.upgradeText = ""
-                }
-                activateOverdrive()
+        if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType { // if an upgrade is involved
+            if type == .overdrive { // if its the non-persistent one
+                upgradeText = "Overdrive Active" // display the text
+                removeUpgradeText()
+                activateOverdrive() // activate the upgrade
             } else {
-                ship.apply(type)
+                ship.apply(type) // normal upgrade
                 upgradeText = "\(type) Gained"
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    self.upgradeText = ""
-                }
+                removeUpgradeText()
             }
-            upgrade.removeFromParent()
-            viewModel?.updateScore(points: 100)
+            upgrade.removeFromParent() // destroy upgrade
+            viewModel?.updateScore(points: 100) // give credit
         }
         
-        if let laser = laser { laser.removeFromParent() }
+        if let laser = laser { laser.removeFromParent() } // prevent memory leaks
     }
-
-    private func activateOverdrive() {
-        if overdriveRemaining > 0 {
-            overdriveRemaining += overdriveBonusDuration
-        } else {
-            preOverdriveFireRate = ship.fireRate
-            overdriveRemaining = overdriveBaseDuration
-            ship.fireRate = minFireRate
+    
+    private func removeUpgradeText() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.upgradeText = "" // clear variable after short time for future uses
         }
-        overdriveBackground.isHidden = false
     }
 
+    // activate non-persistent upgradae
+    private func activateOverdrive() {
+        if overdriveRemaining > 0 { // only until it runs out
+            overdriveRemaining += overdriveBonusDuration // increase time every time you get it
+        } else {
+            preOverdriveFireRate = ship.fireRate // save for later restoration
+            overdriveRemaining = overdriveBaseDuration // first time gets base duration
+            ship.fireRate = minFireRate // as fast as it gets
+        }
+        overdriveBackground.isHidden = false // show timer overlay
+    }
+
+    // non-persistent upgrade lifecycle
     private func updateOverdrive(delta: TimeInterval) {
-        guard overdriveRemaining > 0 else { return }
-        overdriveRemaining -= delta
-        let progress = max(0, overdriveRemaining) / overdriveBaseDuration
+        guard overdriveRemaining > 0 else { return } // check timer
+        overdriveRemaining -= delta // subtract passed time
+        let progress = max(0, overdriveRemaining) / overdriveBaseDuration // percentage for timer ui
         overdriveFill.xScale = CGFloat(progress)
         if overdriveRemaining <= 0 {
             overdriveRemaining = 0
-            overdriveBackground.isHidden = true
-            if let previous = preOverdriveFireRate {
+            overdriveBackground.isHidden = true // hide overlay when timer is done
+            if let previous = preOverdriveFireRate { // restore firerate
                 ship.fireRate = previous
                 preOverdriveFireRate = nil
             }
         }
     }
 
+    // damage animation
     private func flashWhite(_ node: SKNode) {
         node.run(.sequence([
-            .colorize(with: .white, colorBlendFactor: 1, duration: 0.05),
+            .colorize(with: .white, colorBlendFactor: 1, duration: 0.05), // short white pulse
             .colorize(withColorBlendFactor: 0, duration: 0.05)
         ]))
     }
 
+    // deprecated, here for eventualities
     private func updateHUD() {
         hudLines.forEach { $0.removeFromParent() }
         hudLines.removeAll()
@@ -615,14 +623,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         }
     }
 
+    // non-persistent upgrade timer
     private func layoutOverdriveUI() {
         overdriveBackground.position = CGPoint(x: frame.midX, y: frame.height - frame.height * 1.3)
     }
     
     // MARK: - Play Audio
     private func playBackgroundMusic() {
-        guard !didPlayIntro else { return }
+        guard !didPlayIntro else { return } // for looping we split the music in two parts, the intro and the looping part
 
+        // get the intro
         guard let url = Bundle.main.url(
             forResource: "backgroundMusicStart",
             withExtension: "wav"
@@ -631,18 +641,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             return
         }
         
+        // play the music once
         do {
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
-            backgroundMusic?.delegate = self
+            backgroundMusic?.delegate = self // append delegate
             backgroundMusic?.numberOfLoops = 0
             backgroundMusic?.prepareToPlay()
             backgroundMusic?.play()
-            didPlayIntro = true
+            didPlayIntro = true // intro played
         } catch {
             print("Failed to play intro music")
         }
     }
     
+    // play the looping part of the music
     private func playLoopingMusic() {
         guard let url = Bundle.main.url(
             forResource: "backgroundMusicLoop",
@@ -654,7 +666,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
         do {
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
-            backgroundMusic?.numberOfLoops = -1
+            backgroundMusic?.numberOfLoops = -1 // loop infinetly
             backgroundMusic?.prepareToPlay()
             backgroundMusic?.play()
         } catch {
@@ -662,33 +674,39 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         }
     }
     
+    // delegate callback that gets called when the audio player finished playing -> causes looping
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         playLoopingMusic()
     }
     
     // MARK: Sound Effects
     private func playSFX(_ file: String, volume: Float = 1.0) {
-        // Using SKAction.playSoundFileNamed for short, one-shot sound effects
+        // Using SKAction.playSoundFileNamed for short, one-shot sound effects since audio adds a lot of overhead for many short sounds
         let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
         run(playAction)
     }
 
+    // MARK: Game Over
     private func gameOver() {
         ship.health = 0
         viewModel?.setGameOver()
         backgroundMusic?.stop()
-        playSFX("gameover.mp3", volume: 0.6)
-        physicsWorld.speed = 0
+        playSFX("gameover.mp3", volume: 0.6) // game over sound effect
+        physicsWorld.speed = 0 // stop the game
     }
 
     // MARK: Input
-    func beginDrag() { dragStartX = shipNode.position.x }
+    func beginDrag() {
+        dragStartX = shipNode.position.x // only move on the x axis
+    }
+    
     func dragShip(by deltaX: CGFloat) {
         let proposedX = dragStartX + deltaX
         let half = shipNode.size.width / 2
-        shipNode.position.x = min(max(proposedX, -size.width / 2 + half), size.width / 2 - half)
+        shipNode.position.x = min(max(proposedX, -size.width / 2 + half), size.width / 2 - half) // avoid clamping
     }
 
+    // when restarting the game, set everything back to the initial values
     func reset() {
         ship = Spaceship()
         elapsed = 0
