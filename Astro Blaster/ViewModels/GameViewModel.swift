@@ -12,6 +12,7 @@ import Combine
 final class GameViewModel: ObservableObject {
     // MARK: - Published State
     @Published var isGameOver = false
+    @Published var isGamePaused = false
     @Published var scoreValue: Int = 0
     @Published var highscore: Int = 0
     
@@ -47,5 +48,14 @@ final class GameViewModel: ObservableObject {
     
     func setGameOver() {
         isGameOver = true
+    }
+    
+    func setGamePause() {
+        isGamePaused = true
+        
+    }
+    
+    func setGameUnpause() {
+        isGamePaused = false
     }
 }

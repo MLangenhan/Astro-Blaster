@@ -16,7 +16,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     weak var viewModel: GameViewModel?
     
     // MARK: Audio
-    private var backgroundMusic: AVAudioPlayer?
+    var backgroundMusic: AVAudioPlayer?
     private var didPlayIntro = false
     
     // MARK: Assets
@@ -38,6 +38,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var shootLeftNext = true
     /// Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
     private var nextUpgradeSpawnAt: TimeInterval?
+    /// Used for unpausing the game and setting speed back to original speed
+    private var recoverSpeed: CGFloat = 0
     
     // MARK: Active Upgrades
     private var overdriveRemaining: TimeInterval = 0
@@ -154,7 +156,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // how fast does the background scroll
     private var backgroundScrollSpeed: CGFloat {
-        guard let vm = viewModel, !vm.isGameOver else { return 0 } // only if viemodel is connected and not game over
+        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else { return 0 } // only if viemodel is connected and not game over
         return 40 + difficulty() * 20   // scales with difficulty
     }
     
@@ -302,7 +304,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // gets called once per frame
     override func update(_ currentTime: TimeInterval) {
-        guard let vm = viewModel, !vm.isGameOver else { return } // check for viewmodel and if not game over
+        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else {
+            lastUpdateTime = currentTime
+            return
+        } // check for viewmodel and if not game over
         
         let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
         elapsed += delta // counts elapsed time to keep track of how long its been played
@@ -696,6 +701,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         backgroundMusic?.stop()
         playSFX("gameover.mp3", volume: 0.6) // game over sound effect
         physicsWorld.speed = 0 // stop the game
+    }
+    
+    //MARK: Game Paused
+    func gamePause() {
+        recoverSpeed = physicsWorld.speed
+        viewModel?.setGamePause()
+        physicsWorld.speed = 0
+        backgroundMusic?.stop()
+    }
+    
+    func gameUnpause() {
+        viewModel?.setGameUnpause()
+        physicsWorld.speed = recoverSpeed
+        backgroundMusic?.play()
     }
 
     // MARK: Input
