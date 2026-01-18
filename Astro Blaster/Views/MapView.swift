@@ -73,80 +73,94 @@ struct MapView: View {
     // MARK: - Body
     var body: some View {
         
-        // Map view without default POIs
-        Map(position: $cameraPosition) {
-            ForEach(places) { place in
-                // Add a pin for each arena
-                Annotation(place.name, coordinate: place.coordinate) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.title)
-                        .foregroundColor(.red)
-                        .onTapGesture {                     // Select the place when the pin is tapped
-                            selectedPlace = place
-                        }
-                }
-            }
+        ZStack{
             
-            // User-Location
-            if let userLocation = locationManager.userLocation {
-                Annotation("Du", coordinate: userLocation.coordinate) {
-                    Image(systemName: "location.fill")
-                        .foregroundColor(.blue)
-                        .font(.title2)
+            // Map view without default POIs
+            Map(position: $cameraPosition) {
+                ForEach(places) { place in
+                    // Add a pin for each arena
+                    Annotation(place.name, coordinate: place.coordinate) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.title)
+                            //.font(.custom("ArcadeInterlaced", size: 25))
+                            .foregroundColor(.red)
+                            .onTapGesture {                     // Select the place when the pin is tapped
+                                selectedPlace = place
+                            }
+                    }
+                }
+                
+                // User-Location
+                if let userLocation = locationManager.userLocation {
+                    Annotation("Du", coordinate: userLocation.coordinate) {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(.purple)
+                            //.font(.title2)
+                            .font(.custom("ArcadeInterlaced", size: 12))
+                    }
                 }
             }
-        }
-        .mapStyle(.hybrid(
-            elevation: .realistic,                          // Show realistic 3D map
-            pointsOfInterest: .excludingAll                 // Remove all system POIs
-        ))
-        // BUG FIX
-        // Problem: Images of the arenas only appear when the map is moved
-        // Solution: Minimal map movement at the start
-        .onAppear {
-            // Small latency, that map is loaded
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                // Only once
-                if !hasInitialCenterMoved {
-                    // Create new position
-                    if let initialRegion = cameraPosition.region {
-                        var newRegion = initialRegion
-                        newRegion.center.latitude += 0.00001
-                        // Move to new position
-                        withAnimation(.none) {
-                            cameraPosition = .region(newRegion)
-                        }
-                        hasInitialCenterMoved = true
-                        // Move back to old position
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            .mapStyle(.standard(                                 // Settings for Myterious Map
+                elevation: .flat,
+                emphasis: .muted,
+                pointsOfInterest: .excludingAll
+                               ))
+            .preferredColorScheme(.dark)
+            // BUG FIX
+            // Problem: Images of the arenas only appear when the map is moved
+            // Solution: Minimal map movement at the start
+            .onAppear {
+                // Small latency, that map is loaded
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Only once
+                    if !hasInitialCenterMoved {
+                        // Create new position
+                        if let initialRegion = cameraPosition.region {
+                            var newRegion = initialRegion
+                            newRegion.center.latitude += 0.00001
+                            // Move to new position
                             withAnimation(.none) {
-                            // Reset position
-                            newRegion.center.latitude -= 0.00001
-                            cameraPosition = .region(newRegion)
+                                cameraPosition = .region(newRegion)
+                            }
+                            hasInitialCenterMoved = true
+                            // Move back to old position
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.none) {
+                                    // Reset position
+                                    newRegion.center.latitude -= 0.00001
+                                    cameraPosition = .region(newRegion)
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        // Show a bottom sheet when a place is selected
-        .sheet(item: $selectedPlace) { place in
-            ArenaDetails(
-                place: place,
-                userLocation: locationManager.userLocation,
-                onClose: { selectedPlace = nil },
-                onOpenFullScreen: {
-                    // Close sheet
-                    selectedPlace = nil
-                    // Set state for GameView
-                    navigateToGameView = true
-                    // Set state for HighScore Table
-                }
-            )
-        }
-        .fullScreenCover(isPresented: $navigateToGameView) {
-            //MARK:  This only Active If player is near the point!!! LATER ....
-            GameView(maxDifficulty: 5, isPresented: $navigateToGameView)
+            // Show a bottom sheet when a place is selected
+            .sheet(item: $selectedPlace) { place in
+                ArenaDetails(
+                    place: place,
+                    userLocation: locationManager.userLocation,
+                    onClose: { selectedPlace = nil },
+                    onOpenFullScreen: {
+                        // Close sheet
+                        selectedPlace = nil
+                        // Set state for GameView
+                        navigateToGameView = true
+                        // Set state for HighScore Table
+                    }
+                )
+            }
+            .fullScreenCover(isPresented: $navigateToGameView) {
+                //MARK:  This only Active If player is near the point!!! LATER ....
+                GameView(maxDifficulty: 5, isPresented: $navigateToGameView)
+            }
+            
+            // 🌫️ Nebel
+            Rectangle()
+                .fill(.black.opacity(0.15))
+                .ignoresSafeArea()
+                .colorMultiply(.purple.opacity(1))
+                .allowsHitTesting(false)
         }
     }
 }

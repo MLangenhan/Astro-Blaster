@@ -16,49 +16,68 @@ struct HighscoreView: View {
     
     private var sortedScores: [(key: String, value: Int)] {
         scores.sorted { $0.value > $1.value }
-    } // Sorted scores
+    }
     
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack {
+            
             // Back-Button
             HStack {
                 Button {
                     dismiss()
                 } label: {
                     Label("Back", systemImage: "chevron.left")
-                        .font(.headline)
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.green)
                 }
 
                 Spacer()
             }
             .padding()
 
+            // Highscore-Header
             Text("Highscores")
-                .font(.largeTitle)
-                .bold()
+                .font(.custom("ArcadeInterlaced", size: 28))
+                .foregroundColor(.green)
+                .padding(.bottom, 10)
 
+            // Highscore List
             List {
-                // Show best 10 Scores
                 ForEach(Array(sortedScores.prefix(10).enumerated()), id: \.element.key) { index, entry in
                     HStack {
                         Text("#\(index + 1)")
-                            .bold()
+                            .font(.custom("ArcadeInterlaced", size: 20))
+                            .foregroundColor(.white)
                         
                         Spacer()
                         
                         Text(entry.key)
+                            .font(.custom("ArcadeInterlaced", size: 12))
+                            .foregroundColor(.white)
                         
                         Spacer()
                         
                         Text("\(entry.value) pts")
+                            .foregroundColor(.green)
                     }
+                    .padding(.vertical, 4)
+                    .listRowBackground(Color.black) // jede Zeile dunkel
+                    .listRowInsets(EdgeInsets())    // entfernt extra Inset
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)       // entfernt hellen Hintergrund
+            .background(Color.black)
+            .cornerRadius(12)
+            .padding()
+
         }
+        .background(Color.black.ignoresSafeArea()) // dunkler Hintergrund
     }
 }
+
 
 
 #Preview {

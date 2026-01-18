@@ -62,20 +62,21 @@ struct ArenaDetails: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            
+
             // MARK: - Title
             Text(place.name)
-                .font(.title2)
-                .bold()
-            
+                .font(.custom("ArcadeInterlaced", size: 24))
+                .foregroundColor(.green)
+
             // MARK: - Description
             Text(place.description)
-                .font(.body)
+                .font(.custom("ArcadeInterlaced", size: 15))
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                            
-            
+
             Divider()
-            
+                .background(Color.green) // grüne Divider
+
             // MARK: - Buttons
             HStack(spacing: 20) {
                 
@@ -83,40 +84,49 @@ struct ArenaDetails: View {
                     onClose()               // Calls the closure to close the sheet
                 }
                 .buttonStyle(.bordered)
-                
+                .tint(.green)
+                .font(.custom("ArcadeInterlaced", size: 12))
+
                 Button("FIGHT!!!") {
                     onOpenFullScreen()      // Trigger full-screen navigation
                 }
                 .disabled(!isInRange)
                 .buttonStyle(.borderedProminent)
+                .tint(.green)
+                .font(.custom("ArcadeInterlaced", size: 12))
             }
-            
+
             // MARK: - Check if User near the arena
             if let distance = distanceInMeters {
                 Text(isInRange
                      ? "🟢 In Reichweite (\(Int(distance)) m)"
                      : "🔴 Zu weit entfernt (\(Int(distance)) m)")
-                    .font(.headline)
+                    .font(.custom("ArcadeInterlaced", size: 12))
+                    .foregroundColor(.white)
             } else {
                 Text("📍 Standort wird ermittelt …")
+                    .font(.custom("ArcadeInterlaced", size: 12))
+                    .foregroundColor(.white)
             }
-            
+
             Divider()
+                .background(Color.green)
             
+            // MARK: - Highscore Button
             Button("Highscores of \(place.name)") {
                 showHighscores = true
             }
             .buttonStyle(.borderedProminent)
-            
+            .tint(.green)
+            .font(.custom("ArcadeInterlaced", size: 12))
+
         }
-        .padding()
-        // Limit the sheet height
+        .padding() // Limit the sheet height
         .presentationDetents([.height(250)])
-        .fullScreenCover(isPresented: $showHighscores) {
-            HighscoreView(place: place, scores: playerscores)
-        }
+        .fullScreenCover(isPresented: $showHighscores) { HighscoreView(place: place, scores: playerscores) }
     }
 }
+
 
 // MARK: - Preview
 #Preview {
