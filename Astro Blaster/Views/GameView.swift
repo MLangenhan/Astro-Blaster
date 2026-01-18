@@ -123,6 +123,7 @@ struct GameView: View {
             .foregroundColor(.green)
             
             Button(action: {
+                viewModel.setGameUnpause()
                 viewModel.resetGame()
                 scene.reset()
             }) {

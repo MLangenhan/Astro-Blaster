@@ -30,6 +30,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var upgradeText = ""
     private var dragStartX: CGFloat = 0
     private var lastFire: TimeInterval = 0
+    private var lastFireDelta: TimeInterval = 0 //Delta from current time to last fire if paused
     private var lastUpdateTime: TimeInterval = 0
     private var elapsed: TimeInterval = 0
     private var lastEnemySpawn: TimeInterval = 0
@@ -156,7 +157,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // how fast does the background scroll
     private var backgroundScrollSpeed: CGFloat {
-        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else { return 0 } // only if viemodel is connected and not game over
+        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else { return 0 } // only if viemodel is connected and not game over or paused
         return 40 + difficulty() * 20   // scales with difficulty
     }
     
@@ -306,8 +307,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     override func update(_ currentTime: TimeInterval) {
         guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else {
             lastUpdateTime = currentTime
+            lastFire = currentTime - lastFireDelta
             return
-        } // check for viewmodel and if not game over
+        } // check for viewmodel and if not game over or paused
         
         let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
         elapsed += delta // counts elapsed time to keep track of how long its been played
@@ -358,6 +360,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Lasers
     private func fireLasers(_ time: TimeInterval) {
+        lastFireDelta = time - lastFire
+        print(lastFire)
         guard time - lastFire >= ship.fireRate else { return } // only fire after "fireRate" amount of time has passed
         lastFire = time
 
