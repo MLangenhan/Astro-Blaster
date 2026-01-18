@@ -60,11 +60,19 @@ struct MapView: View {
             )
         ),
         ArenaPlace(
+            name: "Tivoli",
+            description: "Fight at Tivoli.",
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.793209,
+                longitude: 6.098766
+            )
+        ),
+        ArenaPlace(
             name: "End Game",
             description: "Fight at End Game.",
             coordinate: CLLocationCoordinate2D(
-                latitude: 50.782,
-                longitude: 6.09
+                latitude: 50.788902,
+                longitude: 6.057804
             )
         )
     ]
@@ -80,10 +88,14 @@ struct MapView: View {
                 ForEach(places) { place in
                     // Add a pin for each arena
                     Annotation(place.name, coordinate: place.coordinate) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.title)
-                            //.font(.custom("ArcadeInterlaced", size: 25))
-                            .foregroundColor(.red)
+                        Image(systemName: "crown.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 28, height: 28)
+                            .padding(6)
+                            .background(Circle().fill(Color.purple))
+                            .foregroundColor(.yellow)
+                            .shadow(radius: 3)
                             .onTapGesture {                     // Select the place when the pin is tapped
                                 selectedPlace = place
                             }
@@ -106,9 +118,6 @@ struct MapView: View {
                 pointsOfInterest: .excludingAll
                                ))
             .preferredColorScheme(.dark)
-            // BUG FIX
-            // Problem: Images of the arenas only appear when the map is moved
-            // Solution: Minimal map movement at the start
             .onAppear {
                 // Small latency, that map is loaded
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -155,7 +164,6 @@ struct MapView: View {
                 GameView(maxDifficulty: 5, isPresented: $navigateToGameView)
             }
             
-            // 🌫️ Nebel
             Rectangle()
                 .fill(.black.opacity(0.15))
                 .ignoresSafeArea()
