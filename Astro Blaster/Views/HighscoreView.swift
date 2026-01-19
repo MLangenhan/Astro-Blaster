@@ -84,6 +84,7 @@ struct HighscoreView: View {
     HighscoreView(place: ArenaPlace(
         name: "Test Arena",
         description: "Description",
+        difficulty: 10,
         coordinate: .init(latitude: 0, longitude: 0)
     ), scores: [
         "Alice": 95,

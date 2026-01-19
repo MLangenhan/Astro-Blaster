@@ -138,6 +138,7 @@ struct ArenaDetails: View {
         place: ArenaPlace(
             name: "Test Arena",
             description: "Description",
+            difficulty: 10,
             coordinate: .init(latitude: 0, longitude: 0)
         ),
         userLocation: CLLocation(latitude: 50.77560, longitude: 6.08370), // Fake Location

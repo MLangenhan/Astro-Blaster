@@ -14,6 +14,7 @@ struct ArenaPlace: Identifiable {
     let id = UUID()
     let name: String
     let description: String
+    let difficulty: Int
     let coordinate: CLLocationCoordinate2D}
 
 
@@ -30,6 +31,7 @@ struct MapView: View {
     // MARK: - State Properties
     @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
     @State private var navigateToGameView = false       // Trigger full-screen navigation of GameView
+    @State private var arenaDifficulty = 10              // Show profile
     @State private var hasInitialCenterMoved = false    // Initial move of map only once
     @State private var showProfile = false              // Show profile
     @State private var showSettings = false             // Show settings
@@ -50,6 +52,7 @@ struct MapView: View {
         ArenaPlace(
             name: "Dom Aachen",
             description: "Fight at Dom Aachen.",
+            difficulty: 14,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77535,
                 longitude: 6.08389
@@ -58,6 +61,7 @@ struct MapView: View {
         ArenaPlace(
             name: "RWTH Aachen",
             description: "Fight at RWTH Aachen.",
+            difficulty: 4,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77846,
                 longitude: 6.06099
@@ -66,6 +70,7 @@ struct MapView: View {
         ArenaPlace(
             name: "Tivoli",
             description: "Fight at Tivoli.",
+            difficulty: 6,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.793209,
                 longitude: 6.098766
@@ -74,6 +79,7 @@ struct MapView: View {
         ArenaPlace(
             name: "End Game",
             description: "Fight at End Game.",
+            difficulty: 10,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.788902,
                 longitude: 6.057804
@@ -161,6 +167,8 @@ struct MapView: View {
                     onOpenFullScreen: {
                         // Close sheet
                         selectedPlace = nil
+                        // Arena difficulty
+                        arenaDifficulty = place.difficulty
                         // Set state for GameView
                         navigateToGameView = true
                         // Set state for HighScore Table
@@ -169,7 +177,7 @@ struct MapView: View {
             }
             .fullScreenCover(isPresented: $navigateToGameView) {
                 //MARK:  This only Active If player is near the point!!! LATER ....
-                    GameView(maxDifficulty: 14, isPresented: $navigateToGameView)
+                GameView(maxDifficulty: CGFloat(arenaDifficulty), isPresented: $navigateToGameView)
             }
             
             Rectangle()
