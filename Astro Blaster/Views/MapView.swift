@@ -32,6 +32,9 @@ struct MapView: View {
     @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
     @State private var navigateToGameView = false       // Trigger full-screen navigation of GameView
     @State private var hasInitialCenterMoved = false    // Initial move of map only once
+    @State private var showProfile = false              // Show profile
+    @State private var showSettings = false             // Show settings
+
     
     // MARK: - Initial Map Camera Position
     // The map will start centered around Aachen
@@ -174,32 +177,49 @@ struct MapView: View {
                 .colorMultiply(.purple.opacity(1))
                 .allowsHitTesting(false)
             
-            VStack {
-
+            // Own VStack for Headline, because allowsHitTesting = false
+            VStack{
                 Text("ASTRO BLASTER")
                     .font(.custom("ArcadeInterlaced", size: 36))
                     .foregroundColor(.green)
                     .shadow(color: .purple, radius: 4, x: 2, y: 2)
                     .padding(.top, 40)
-
+                
+                Spacer()
+            }
+            .allowsHitTesting(false)
+            
+            // Own VStack for Headline, because allowsHitTesting = true
+            VStack {
                 Spacer()
 
                 HStack(spacing: 38) {
 
+                    // Profile Button
                     CircleIconButton(systemImage: "person.fill")
-                    // getting action later -> Make profile
+                        .onTapGesture {
+                            showProfile = true
+                        }
 
+                    // Settings Button
                     CircleIconButton(systemImage: "gearshape.fill")
-                    // getting action later -> Make settings (Sound)
+                        .onTapGesture {
+                            showSettings = true
+                        }
 
                 }
                 .padding(.bottom, 40)
                 .opacity(selectedPlace == nil ? 1 : 0)
                 .animation(.easeInOut(duration: 0.25), value: selectedPlace == nil)
                 .allowsHitTesting(selectedPlace == nil)
+                .fullScreenCover(isPresented: $showProfile) {
+                    ProfileView()
+                }
+                .fullScreenCover(isPresented: $showSettings) {
+                    ProfileView() // Change later
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .allowsHitTesting(false)
         }
     }
 }

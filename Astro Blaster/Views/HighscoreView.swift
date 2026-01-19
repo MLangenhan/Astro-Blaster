@@ -63,18 +63,18 @@ struct HighscoreView: View {
                             .foregroundColor(.green)
                     }
                     .padding(.vertical, 4)
-                    .listRowBackground(Color.black) // jede Zeile dunkel
-                    .listRowInsets(EdgeInsets())    // entfernt extra Inset
+                    .listRowBackground(Color.black)
+                    .listRowInsets(EdgeInsets())
                 }
             }
             .listStyle(.plain)
-            .scrollContentBackground(.hidden)       // entfernt hellen Hintergrund
+            .scrollContentBackground(.hidden)
             .background(Color.black)
             .cornerRadius(12)
             .padding()
 
         }
-        .background(Color.black.ignoresSafeArea()) // dunkler Hintergrund
+        .background(Color.black.ignoresSafeArea())
     }
 }
 
