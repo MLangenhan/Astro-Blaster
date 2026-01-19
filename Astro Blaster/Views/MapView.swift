@@ -174,21 +174,54 @@ struct MapView: View {
                 .colorMultiply(.purple.opacity(1))
                 .allowsHitTesting(false)
             
-            // --- Title as overlay ---
-                VStack {
-                    Text("ASTRO BLASTER")
-                        .font(.custom("ArcadeInterlaced", size: 27))
-                        .foregroundColor(.green)
-                        .shadow(color: .purple, radius: 4, x: 2, y: 2)
-                        .padding(.top, 10)
+            VStack {
 
-                    Spacer()
+                Text("ASTRO BLASTER")
+                    .font(.custom("ArcadeInterlaced", size: 36))
+                    .foregroundColor(.green)
+                    .shadow(color: .purple, radius: 4, x: 2, y: 2)
+                    .padding(.top, 40)
+
+                Spacer()
+
+                HStack(spacing: 38) {
+
+                    CircleIconButton(systemImage: "person.fill")
+                    // getting action later -> Make profile
+
+                    CircleIconButton(systemImage: "gearshape.fill")
+                    // getting action later -> Make settings (Sound)
+
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .allowsHitTesting(false)
+                .padding(.bottom, 40)
+                .opacity(selectedPlace == nil ? 1 : 0)
+                .animation(.easeInOut(duration: 0.25), value: selectedPlace == nil)
+                .allowsHitTesting(selectedPlace == nil)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .allowsHitTesting(false)
         }
     }
 }
+
+struct CircleIconButton: View {
+    let systemImage: String
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 25, height: 25)
+            .foregroundColor(.white.opacity(0.9))
+            .padding(18)
+            .background(
+                Circle()
+                    .fill(Color.green)
+                    .shadow(color: .green.opacity(0.6), radius: 6)
+            )
+    }
+}
+
 
 // MARK: - Preview
 #Preview {
