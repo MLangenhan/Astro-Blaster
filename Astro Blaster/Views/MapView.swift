@@ -14,8 +14,8 @@ struct ArenaPlace: Identifiable {
     let id = UUID()
     let name: String
     let description: String
-    let coordinate: CLLocationCoordinate2D
-}
+    let difficulty: Int
+    let coordinate: CLLocationCoordinate2D}
 
 
 // MARK: - Map View
@@ -31,15 +31,18 @@ struct MapView: View {
     // MARK: - State Properties
     @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
     @State private var navigateToGameView = false       // Trigger full-screen navigation of GameView
+    @State private var arenaDifficulty = 10              // Show profile
     @State private var hasInitialCenterMoved = false    // Initial move of map only once
     @State private var showProfile = false              // Show profile
     @State private var showSettings = false             // Show settings
+    @State private var initialRegionSet = false // Track, ob wir schon auf User zentriert haben
+
 
     
     // MARK: - Initial Map Camera Position
     // The map will start centered around Aachen
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 50.77664, longitude: 6.08342),
+        center: CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342),
         span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
     ))
     
@@ -49,6 +52,7 @@ struct MapView: View {
         ArenaPlace(
             name: "Dom Aachen",
             description: "Fight at Dom Aachen.",
+            difficulty: 14,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77535,
                 longitude: 6.08389
@@ -57,6 +61,7 @@ struct MapView: View {
         ArenaPlace(
             name: "RWTH Aachen",
             description: "Fight at RWTH Aachen.",
+            difficulty: 4,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77846,
                 longitude: 6.06099
@@ -65,6 +70,7 @@ struct MapView: View {
         ArenaPlace(
             name: "Tivoli",
             description: "Fight at Tivoli.",
+            difficulty: 6,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.793209,
                 longitude: 6.098766
@@ -73,6 +79,7 @@ struct MapView: View {
         ArenaPlace(
             name: "End Game",
             description: "Fight at End Game.",
+            difficulty: 10,
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.788902,
                 longitude: 6.057804
@@ -89,17 +96,9 @@ struct MapView: View {
             // Map view without default POIs
             Map(position: $cameraPosition) {
                 ForEach(places) { place in
-                    // Add a pin for each arena
                     Annotation(place.name, coordinate: place.coordinate) {
-                        Image(systemName: "crown.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 28, height: 28)
-                            .padding(6)
-                            .background(Circle().fill(Color.purple))
-                            .foregroundColor(.yellow)
-                            .shadow(radius: 3)
-                            .onTapGesture {                     // Select the place when the pin is tapped
+                        ArenaAnnotationView(place: place)
+                            .onTapGesture {
                                 selectedPlace = place
                             }
                     }
@@ -108,16 +107,23 @@ struct MapView: View {
                 // User-Location
                 if let userLocation = locationManager.userLocation {
                     Annotation("You", coordinate: userLocation.coordinate) {
-                            Image(systemName: "location.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 15, height: 15)
-                                .padding(4)
-                                .background(Circle().fill(Color.blue.opacity(0.8)))
-                                .foregroundColor(.white)
-                                .shadow(radius: 3)
-                        }
+                        UserLocationAnnotationView()
+                    }
                 }
+            }
+            .onChange(of: locationManager.userLocation) { _, newLocation in
+                guard let userLocation = newLocation, !initialRegionSet else { return }
+
+                let region = MKCoordinateRegion(
+                    center: userLocation.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
+                )
+
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    cameraPosition = .region(region)
+                }
+
+                initialRegionSet = true
             }
             .mapStyle(.standard(                  // Settings for Myterious Map
                 elevation: .flat,
@@ -156,10 +162,13 @@ struct MapView: View {
                 ArenaDetails(
                     place: place,
                     userLocation: locationManager.userLocation,
+                    difficulty: 5,                      // later arena difficulty
                     onClose: { selectedPlace = nil },
                     onOpenFullScreen: {
                         // Close sheet
                         selectedPlace = nil
+                        // Arena difficulty
+                        arenaDifficulty = place.difficulty
                         // Set state for GameView
                         navigateToGameView = true
                         // Set state for HighScore Table
@@ -168,7 +177,7 @@ struct MapView: View {
             }
             .fullScreenCover(isPresented: $navigateToGameView) {
                 //MARK:  This only Active If player is near the point!!! LATER ....
-                GameView(maxDifficulty: 14, isPresented: $navigateToGameView)
+                GameView(maxDifficulty: CGFloat(arenaDifficulty), isPresented: $navigateToGameView)
             }
             
             Rectangle()
@@ -180,10 +189,10 @@ struct MapView: View {
             // Own VStack for Headline, because allowsHitTesting = false
             VStack{
                 Text("ASTRO BLASTER")
-                    .font(.custom("ArcadeInterlaced", size: 36))
+                    .font(.custom("ArcadeInterlaced", size: 38))
                     .foregroundColor(.green)
                     .shadow(color: .purple, radius: 4, x: 2, y: 2)
-                    .padding(.top, 40)
+                    .padding(.top, 5)
                 
                 Spacer()
             }
@@ -212,11 +221,11 @@ struct MapView: View {
                 .opacity(selectedPlace == nil ? 1 : 0)
                 .animation(.easeInOut(duration: 0.25), value: selectedPlace == nil)
                 .allowsHitTesting(selectedPlace == nil)
-                .fullScreenCover(isPresented: $showProfile) {
-                    ProfileView()
+                .sheet(isPresented: $showSettings) {
+                    SettingsView()
                 }
-                .fullScreenCover(isPresented: $showSettings) {
-                    ProfileView() // Change later
+                .sheet(isPresented: $showProfile) {
+                    ProfileView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

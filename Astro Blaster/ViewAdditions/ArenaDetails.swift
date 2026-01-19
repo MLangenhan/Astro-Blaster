@@ -14,6 +14,7 @@ struct ArenaDetails: View {
     
     let place: ArenaPlace                   // The selected arena
     let userLocation: CLLocation?           // User location
+    let difficulty: Int                     // Arena difficulty
     let onClose: () -> Void                 // Action to close the sheet
     let onOpenFullScreen: () -> Void        // New closure for full-screen navigation
     
@@ -54,10 +55,10 @@ struct ArenaDetails: View {
         return userLocation.distance(from: arenaLocation)
     }
 
-    // Distance has to be under or equal 100 meters
+    // Distance has to be under or equal 200 meters
     private var isInRange: Bool {
         guard let distanceInMeters else { return false }
-        return distanceInMeters <= 100000000
+        return distanceInMeters <= 200
     }
     
     var body: some View {
@@ -124,9 +125,9 @@ struct ArenaDetails: View {
         .padding() // Limit the sheet height
         .presentationDetents([.height(250)])
         .fullScreenCover(isPresented: $showHighscores) {
-            GameCenterLeaderboardView()
-                .ignoresSafeArea()
+            HighscoreView(place: place)
         }
+        .ignoresSafeArea()
     }
 }
 
@@ -137,9 +138,11 @@ struct ArenaDetails: View {
         place: ArenaPlace(
             name: "Test Arena",
             description: "Description",
+            difficulty: 10,
             coordinate: .init(latitude: 0, longitude: 0)
         ),
         userLocation: CLLocation(latitude: 50.77560, longitude: 6.08370), // Fake Location
+        difficulty: 5,
         onClose: {},
         onOpenFullScreen: {},
     )
