@@ -14,9 +14,7 @@ struct ArenaPlace: Identifiable {
     let id = UUID()
     let name: String
     let description: String
-    let coordinate: CLLocationCoordinate2D
-    let leaderboardID: String
-}
+    let coordinate: CLLocationCoordinate2D}
 
 
 // MARK: - Map View
@@ -55,8 +53,7 @@ struct MapView: View {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77535,
                 longitude: 6.08389
-            ),
-            leaderboardID: "dom_aachen"
+            )
         ),
         ArenaPlace(
             name: "RWTH Aachen",
@@ -64,8 +61,7 @@ struct MapView: View {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77846,
                 longitude: 6.06099
-            ),
-            leaderboardID: "rwth_aachen"
+            )
         ),
         ArenaPlace(
             name: "Tivoli",
@@ -73,8 +69,7 @@ struct MapView: View {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.793209,
                 longitude: 6.098766
-            ),
-            leaderboardID: "tivoli"
+            )
         ),
         ArenaPlace(
             name: "End Game",
@@ -82,8 +77,7 @@ struct MapView: View {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.788902,
                 longitude: 6.057804
-            ),
-            leaderboardID: "end_game"
+            )
         )
     ]
     
