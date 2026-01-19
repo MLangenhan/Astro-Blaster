@@ -123,7 +123,10 @@ struct ArenaDetails: View {
         }
         .padding() // Limit the sheet height
         .presentationDetents([.height(250)])
-        .fullScreenCover(isPresented: $showHighscores) { HighscoreView(place: place, scores: playerscores) }
+        .fullScreenCover(isPresented: $showHighscores) {
+            GameCenterLeaderboardView(leaderboardID: place.leaderboardID)
+                .ignoresSafeArea()
+        }
     }
 }
 
@@ -134,7 +137,8 @@ struct ArenaDetails: View {
         place: ArenaPlace(
             name: "Test Arena",
             description: "Description",
-            coordinate: .init(latitude: 0, longitude: 0)
+            coordinate: .init(latitude: 0, longitude: 0),
+            leaderboardID: "test_arena"
         ),
         userLocation: CLLocation(latitude: 50.77560, longitude: 6.08370), // Fake Location
         onClose: {},

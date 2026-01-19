@@ -8,8 +8,28 @@
 import Foundation
 import SwiftUI
 import Combine
+import GameKit
 
 final class GameViewModel: ObservableObject {
+    
+    let arena: ArenaPlace
+    
+    // MARK: GameCenter Service
+    struct GameCenterService {
+        static func submit(score: Int, leaderboardID: String) {
+            guard GKLocalPlayer.local.isAuthenticated else { return }
+            let gkScore = GKScore(leaderboardIdentifier: leaderboardID)
+            gkScore.value = Int64(score)
+            GKScore.report([gkScore]) { error in
+                if let error = error {
+                    print("Score submission failed: \(error)")
+                } else {
+                    print("Score submitted: \(score) to \(leaderboardID)")
+                }
+            }
+        }
+    }
+    
     // MARK: - Published State
     @Published var isGameOver = false
     @Published var isGamePaused = false
@@ -17,11 +37,13 @@ final class GameViewModel: ObservableObject {
     @Published var highscore: Int = 0
     
     // MARK: - Logic & Persistence
-    private let highscoreKey = "Highscore"
+    private var highscoreKey: String { "Highscore_\(arena.leaderboardID)" }
+
     let maxDifficulty: CGFloat
     
-    init(maxDifficulty: CGFloat) {
+    init(maxDifficulty: CGFloat, arena: ArenaPlace) {
         self.maxDifficulty = maxDifficulty
+        self.arena = arena
         loadHighscore()
     }
     
@@ -48,6 +70,7 @@ final class GameViewModel: ObservableObject {
     
     func setGameOver() {
         isGameOver = true
+        GameCenterService.submit(score: scoreValue, leaderboardID: arena.leaderboardID)
     }
     
     func setGamePause() {
