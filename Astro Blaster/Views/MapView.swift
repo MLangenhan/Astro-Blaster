@@ -34,12 +34,14 @@ struct MapView: View {
     @State private var hasInitialCenterMoved = false    // Initial move of map only once
     @State private var showProfile = false              // Show profile
     @State private var showSettings = false             // Show settings
+    @State private var initialRegionSet = false // Track, ob wir schon auf User zentriert haben
+
 
     
     // MARK: - Initial Map Camera Position
     // The map will start centered around Aachen
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 50.77664, longitude: 6.08342),
+        center: CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342),
         span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
     ))
     
@@ -89,17 +91,9 @@ struct MapView: View {
             // Map view without default POIs
             Map(position: $cameraPosition) {
                 ForEach(places) { place in
-                    // Add a pin for each arena
                     Annotation(place.name, coordinate: place.coordinate) {
-                        Image(systemName: "crown.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 28, height: 28)
-                            .padding(6)
-                            .background(Circle().fill(Color.purple))
-                            .foregroundColor(.yellow)
-                            .shadow(radius: 3)
-                            .onTapGesture {                     // Select the place when the pin is tapped
+                        ArenaAnnotationView(place: place)
+                            .onTapGesture {
                                 selectedPlace = place
                             }
                     }
@@ -108,16 +102,23 @@ struct MapView: View {
                 // User-Location
                 if let userLocation = locationManager.userLocation {
                     Annotation("You", coordinate: userLocation.coordinate) {
-                            Image(systemName: "location.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 15, height: 15)
-                                .padding(4)
-                                .background(Circle().fill(Color.blue.opacity(0.8)))
-                                .foregroundColor(.white)
-                                .shadow(radius: 3)
-                        }
+                        UserLocationAnnotationView()
+                    }
                 }
+            }
+            .onChange(of: locationManager.userLocation) { _, newLocation in
+                guard let userLocation = newLocation, !initialRegionSet else { return }
+
+                let region = MKCoordinateRegion(
+                    center: userLocation.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
+                )
+
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    cameraPosition = .region(region)
+                }
+
+                initialRegionSet = true
             }
             .mapStyle(.standard(                  // Settings for Myterious Map
                 elevation: .flat,
