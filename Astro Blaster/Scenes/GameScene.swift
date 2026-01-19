@@ -362,7 +362,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: Lasers
     private func fireLasers(_ time: TimeInterval) {
         lastFireDelta = time - lastFire
-        print(lastFire)
         guard time - lastFire >= ship.fireRate else { return } // only fire after "fireRate" amount of time has passed
         lastFire = time
 
@@ -553,7 +552,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
                 activateOverdrive() // activate the upgrade
             } else {
                 ship.apply(type) // normal upgrade
-                upgradeText = "\(type) Gained"
+                if type == .rapidFire {
+                    upgradeText = "Firerate Increased"
+                } else {
+                    upgradeText = "\(type) Gained"
+                }
                 removeUpgradeText()
             }
             upgrade.removeFromParent() // destroy upgrade
