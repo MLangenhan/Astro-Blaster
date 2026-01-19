@@ -37,6 +37,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var lastUpgradeDrop: TimeInterval = 0
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
+    var soundeffectsEnabled = true
     // Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
     private var nextUpgradeSpawnAt: TimeInterval?
     // Used for unpausing the game and setting speed back to original speed
@@ -697,9 +698,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // MARK: Sound Effects
     private func playSFX(_ file: String, volume: Float = 1.0) {
-        // Using SKAction.playSoundFileNamed for short, one-shot sound effects since audio adds a lot of overhead for many short sounds
-        let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
-        run(playAction)
+        if soundeffectsEnabled {
+            // Using SKAction.playSoundFileNamed for short, one-shot sound effects since audio adds a lot of overhead for many short sounds
+            let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
+            run(playAction)
+        }
     }
 
     // MARK: Game Over

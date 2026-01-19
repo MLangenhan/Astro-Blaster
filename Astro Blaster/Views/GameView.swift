@@ -15,6 +15,7 @@ struct GameView: View {
     @State private var scene: GameScene
     @State private var hasTimeElapsed = false
     @State var musicVolume: Float = 0.5
+    @State var soundEffectsEnabled = true
     
     init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
             self._isPresented = isPresented
@@ -128,15 +129,46 @@ struct GameView: View {
                     .multilineTextAlignment(.center)
                 
                 Spacer()
-                
-                HStack{
-                    Text("Volume")
-                        .font(.custom("ArcadeInterlaced", size: 10))
-                    Slider(value: $musicVolume, in: 0...1, step: 0.1, label: {})
-                        .onChange(of: musicVolume, {scene.backgroundMusic?.setVolume(musicVolume, fadeDuration: 0)})
-                        .tint(.green)
-                        .frame(width:200)
+                VStack (alignment: .leading){
+                    HStack{
+                        Text("Volume")
+                            .font(.custom("ArcadeInterlaced", size: 10))
+                        Slider(value: $musicVolume, in: 0...1, step: 0.1, label: {})
+                            .onChange(of: musicVolume, {scene.backgroundMusic?.setVolume(musicVolume, fadeDuration: 0)})
+                            .tint(.green)
+                            .frame(width:200)
+                    }
+                    HStack {
+                        Text("Soundeffects")
+                            .font(.custom("ArcadeInterlaced", size: 10))
+                        if soundEffectsEnabled == true {
+                            Button(action: {
+                                scene.soundeffectsEnabled = false
+                                soundEffectsEnabled = false
+                            }) {
+                                Image(systemName: "checkmark.square")
+                                    .font(.custom("ArcadeInterlaced", size: 24))
+                                    .background(.clear)
+                            }
+                            .foregroundColor(.green)
+                        
+                        } else {
+                            Button(action: {
+                                scene.soundeffectsEnabled = true
+                                soundEffectsEnabled = true
+                            }) {
+                                Image(systemName: "checkmark.square")
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.clear, .green)
+                                    .font(.custom("ArcadeInterlaced", size: 24))
+                                    .background(.clear)
+                            }
+                            .foregroundColor(.green)
+                        }
+                    }
                 }
+                
+                Spacer()
                 
                 Button(action: {
                     scene.gameUnpause()
