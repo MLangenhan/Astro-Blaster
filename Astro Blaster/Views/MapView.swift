@@ -168,9 +168,7 @@ struct MapView: View {
             }
             .fullScreenCover(isPresented: $navigateToGameView) {
                 //MARK:  This only Active If player is near the point!!! LATER ....
-                if let arena = selectedPlace {
-                    GameView(maxDifficulty: 14, arena: arena, isPresented: $navigateToGameView)
-                }
+                    GameView(maxDifficulty: 14, isPresented: $navigateToGameView)
             }
             
             Rectangle()

@@ -8,12 +8,9 @@
 import Foundation
 import SwiftUI
 import Combine
-import GameKit
 
 final class GameViewModel: ObservableObject {
-    
-    let arena: ArenaPlace
-    
+
     // MARK: - Published State
     @Published var isGameOver = false
     @Published var isGamePaused = false
@@ -25,9 +22,8 @@ final class GameViewModel: ObservableObject {
 
     let maxDifficulty: CGFloat
     
-    init(maxDifficulty: CGFloat, arena: ArenaPlace) {
+    init(maxDifficulty: CGFloat) {
         self.maxDifficulty = maxDifficulty
-        self.arena = arena
         loadHighscore()
     }
     

@@ -13,9 +13,9 @@ struct GameView: View {
     @StateObject private var viewModel: GameViewModel
     @State private var scene: GameScene
 
-   init(maxDifficulty: CGFloat, arena: ArenaPlace, isPresented: Binding<Bool>) {
+   init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
        self._isPresented = isPresented
-       let vm = GameViewModel(maxDifficulty: maxDifficulty, arena: arena)
+       let vm = GameViewModel(maxDifficulty: maxDifficulty)
        self._viewModel = StateObject(wrappedValue: vm)
        
        let newScene = GameScene()
