@@ -14,6 +14,7 @@ struct ArenaDetails: View {
     
     let place: ArenaPlace                   // The selected arena
     let userLocation: CLLocation?           // User location
+    let difficulty: Int                     // Arena difficulty
     let onClose: () -> Void                 // Action to close the sheet
     let onOpenFullScreen: () -> Void        // New closure for full-screen navigation
     
@@ -140,6 +141,7 @@ struct ArenaDetails: View {
             coordinate: .init(latitude: 0, longitude: 0)
         ),
         userLocation: CLLocation(latitude: 50.77560, longitude: 6.08370), // Fake Location
+        difficulty: 5,
         onClose: {},
         onOpenFullScreen: {},
     )

@@ -156,6 +156,7 @@ struct MapView: View {
                 ArenaDetails(
                     place: place,
                     userLocation: locationManager.userLocation,
+                    difficulty: 5,                      // later arena difficulty
                     onClose: { selectedPlace = nil },
                     onOpenFullScreen: {
                         // Close sheet
