@@ -12,7 +12,7 @@ import AVFoundation
 final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
 
     // MARK: Configuration
-    private let difficultyTimeConstant: CGFloat = 90.0 // ~5 min to plateau
+    private let difficultyTimeConstant: CGFloat = 45.0 // ~2.5 min to reach max difficulty
     weak var viewModel: GameViewModel?
     
     // MARK: Audio
@@ -21,7 +21,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     // MARK: Assets
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
-    private var ship = Spaceship()
+    private var ship = Spaceship() // init model
     private let health1 = SKSpriteNode(imageNamed: "heart")
     private let health2 = SKSpriteNode(imageNamed: "heart")
     private let health3 = SKSpriteNode(imageNamed: "heart")
@@ -29,7 +29,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: State
     private var upgradeText = ""
     private var dragStartX: CGFloat = 0
-    private var lastFire: TimeInterval = 0
+    private var lastFire: TimeInterval = 0 // timestamp from last laser fire
     private var lastFireDelta: TimeInterval = 0 //Delta from current time to last fire if paused
     private var lastUpdateTime: TimeInterval = 0
     private var elapsed: TimeInterval = 0
@@ -37,9 +37,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var lastUpgradeDrop: TimeInterval = 0
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
-    /// Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
+    // Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
     private var nextUpgradeSpawnAt: TimeInterval?
-    /// Used for unpausing the game and setting speed back to original speed
+    // Used for unpausing the game and setting speed back to original speed
     private var recoverSpeed: CGFloat = 0
     
     // MARK: Active Upgrades
@@ -48,6 +48,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private let overdriveBonusDuration: TimeInterval = 2.0
     private let minFireRate: TimeInterval = 0.12
     private var preOverdriveFireRate: TimeInterval?
+    
+    // timer
     private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
     private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
     
@@ -60,7 +62,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var loopingBackgrounds: [SKSpriteNode] {
         [background1, background2]
     }
-
 
     // MARK: HUD & Score Labels
     private let hud = SKLabelNode(fontNamed: "ArcadeInterlaced")
@@ -78,7 +79,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         // needs to be done only once
         playBackgroundMusic()
         setupShip()
-        setupHUD() // debugging
+        setupHUD()
         setupOverdriveUI()
         setupScore()
         setupHearts()
@@ -443,7 +444,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // probability distribution of the upgrades
     private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
         (.rapidFire, 0.55), (.overdrive, 0.3), (.health, 0.10), (.dualShot, 0.05)
-        
     ]
 
     private func chooseRandomUpgrade() -> UpgradeType {

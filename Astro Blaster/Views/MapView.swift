@@ -165,7 +165,7 @@ struct MapView: View {
             }
             .fullScreenCover(isPresented: $navigateToGameView) {
                 //MARK:  This only Active If player is near the point!!! LATER ....
-                GameView(maxDifficulty: 5, isPresented: $navigateToGameView)
+                GameView(maxDifficulty: 14, isPresented: $navigateToGameView)
             }
             
             Rectangle()
@@ -220,10 +220,4 @@ struct CircleIconButton: View {
                     .shadow(color: .green.opacity(0.6), radius: 6)
             )
     }
-}
-
-
-// MARK: - Preview
-#Preview {
-    MapView()
 }

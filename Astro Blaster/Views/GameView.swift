@@ -8,9 +8,6 @@
 import SwiftUI
 import SpriteKit
 
-import SwiftUI
-import SpriteKit
-
 struct GameView: View {
     @Binding var isPresented: Bool
     @StateObject private var viewModel: GameViewModel
@@ -42,6 +39,7 @@ struct GameView: View {
                     .ignoresSafeArea()
                     .statusBarHidden(true)
                     .gesture(
+                        // no need to distinguish between tap and drag
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 guard !viewModel.isGameOver else { return }
