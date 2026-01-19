@@ -180,10 +180,10 @@ struct MapView: View {
             // Own VStack for Headline, because allowsHitTesting = false
             VStack{
                 Text("ASTRO BLASTER")
-                    .font(.custom("ArcadeInterlaced", size: 36))
+                    .font(.custom("ArcadeInterlaced", size: 38))
                     .foregroundColor(.green)
                     .shadow(color: .purple, radius: 4, x: 2, y: 2)
-                    .padding(.top, 40)
+                    .padding(.top, 5)
                 
                 Spacer()
             }
@@ -212,11 +212,11 @@ struct MapView: View {
                 .opacity(selectedPlace == nil ? 1 : 0)
                 .animation(.easeInOut(duration: 0.25), value: selectedPlace == nil)
                 .allowsHitTesting(selectedPlace == nil)
-                .fullScreenCover(isPresented: $showProfile) {
-                    ProfileView()
+                .sheet(isPresented: $showSettings) {
+                    SettingsView()
                 }
-                .fullScreenCover(isPresented: $showSettings) {
-                    ProfileView() // Change later
+                .sheet(isPresented: $showProfile) {
+                    ProfileView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
