@@ -12,17 +12,15 @@ struct GameView: View {
     @Binding var isPresented: Bool
     @StateObject private var viewModel: GameViewModel
     @State private var scene: GameScene
-    @State private var hasTimeElapsed = false
 
-    init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
-        self._isPresented = isPresented
-        let vm = GameViewModel(maxDifficulty: maxDifficulty)
-        self._viewModel = StateObject(wrappedValue: vm)
-        
-        // Initialize scene and link to VM
-        let newScene = GameScene()
-        newScene.viewModel = vm
-        self._scene = State(initialValue: newScene)
+   init(maxDifficulty: CGFloat, arena: ArenaPlace, isPresented: Binding<Bool>) {
+       self._isPresented = isPresented
+       let vm = GameViewModel(maxDifficulty: maxDifficulty, arena: arena)
+       self._viewModel = StateObject(wrappedValue: vm)
+       
+       let newScene = GameScene()
+       newScene.viewModel = vm
+       self._scene = State(initialValue: newScene)
     }
 
     private func setupScene(size: CGSize) {

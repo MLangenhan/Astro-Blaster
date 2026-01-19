@@ -10,20 +10,19 @@ import SwiftUI
 import GameKit
 
 struct GameCenterLeaderboardView: UIViewControllerRepresentable {
+    let leaderboardID: String  // new
 
     func makeUIViewController(context: Context) -> GKGameCenterViewController {
         let vc = GKGameCenterViewController()
         vc.gameCenterDelegate = context.coordinator
         vc.viewState = .leaderboards
-        vc.leaderboardIdentifier = "lb1"
+        vc.leaderboardIdentifier = leaderboardID
         return vc
     }
 
     func updateUIViewController(_ uiViewController: GKGameCenterViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
+    
+    func makeCoordinator() -> Coordinator { Coordinator() }
 
     final class Coordinator: NSObject, GKGameCenterControllerDelegate {
         func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
