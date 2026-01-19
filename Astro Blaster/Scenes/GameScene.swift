@@ -661,6 +661,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
             backgroundMusic?.delegate = self // append delegate
             backgroundMusic?.numberOfLoops = 0
+            backgroundMusic?.volume = 0.5
             backgroundMusic?.prepareToPlay()
             backgroundMusic?.play()
             didPlayIntro = true // intro played
@@ -706,7 +707,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         ship.health = 0
         viewModel?.setGameOver()
         backgroundMusic?.stop()
-        playSFX("gameover.mp3", volume: 0.6) // game over sound effect
+        playSFX("gameover.mp3", volume: backgroundMusic!.volume) // game over sound effect
         physicsWorld.speed = 0 // stop the game
     }
     

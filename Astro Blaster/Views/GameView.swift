@@ -7,12 +7,14 @@
 
 import SwiftUI
 import SpriteKit
+internal import AVFAudio
 
 struct GameView: View {
     @Binding var isPresented: Bool
     @StateObject private var viewModel: GameViewModel
     @State private var scene: GameScene
     @State private var hasTimeElapsed = false
+    @State var musicVolume: Float = 0.5
 
     init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
         self._isPresented = isPresented
@@ -74,10 +76,20 @@ struct GameView: View {
     
     private var gameOverOverlay: some View {
         VStack(spacing: 30) {
+            
+            Spacer()
+            
             Text("GAME OVER")
                 .font(.custom("ArcadeInterlaced", size: 48))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
+            
+            Text("Score: \(viewModel.scoreValue)")
+                .font(.custom("ArcadeInterlaced", size: 20))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            
+            Spacer()
             
             Button(action: {
                 viewModel.resetGame()
@@ -96,6 +108,8 @@ struct GameView: View {
                     .font(.custom("ArcadeInterlaced", size: 24))
             }
             .foregroundColor(.white)
+            
+            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.75))
@@ -104,10 +118,24 @@ struct GameView: View {
     private var gamePausedOverlay: some View {
         ZStack{
             VStack(spacing: 30) {
+                
+                Spacer()
+                
                 Text("GAME PAUSED")
                     .font(.custom("ArcadeInterlaced", size: 48))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                
+                Spacer()
+                
+                HStack{
+                    Text("Volume")
+                        .font(.custom("ArcadeInterlaced", size: 10))
+                    Slider(value: $musicVolume, in: 0...1, step: 0.1, label: {})
+                        .onChange(of: musicVolume, {scene.backgroundMusic?.setVolume(musicVolume, fadeDuration: 0)})
+                        .tint(.green)
+                        .frame(width:200)
+                }
                 
                 Button(action: {
                     scene.gameUnpause()
@@ -138,21 +166,14 @@ struct GameView: View {
                         .font(.custom("ArcadeInterlaced", size: 24))
                 }
                 .foregroundColor(.white)
+                
+                Spacer()
+                    
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black.opacity(0.75))
-            Button(action: {
-            }) {
-                Image(systemName: "gearshape.fill")
-                    .font(.custom("ArcadeInterlaced", size: 24))
-                    .background(.clear)
-            }
-            .foregroundColor(.green)
-            .padding()
-            .clipShape(RoundedRectangle(cornerRadius:  10))
-            .padding(14)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         }
     }
         
 }
+
