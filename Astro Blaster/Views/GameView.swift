@@ -55,7 +55,7 @@ struct GameView: View {
                 }) {
                     Image(systemName: "pause.fill")
                         .font(.custom("ArcadeInterlaced", size: 24))
-                        .background(Color.green.opacity(0.2))
+                        .background(.clear)
                 }
                 .foregroundColor(.green)
                 .padding()
@@ -102,43 +102,57 @@ struct GameView: View {
     }
     
     private var gamePausedOverlay: some View {
-        VStack(spacing: 30) {
-            Text("GAME PAUSED")
-                .font(.custom("ArcadeInterlaced", size: 48))
+        ZStack{
+            VStack(spacing: 30) {
+                Text("GAME PAUSED")
+                    .font(.custom("ArcadeInterlaced", size: 48))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                Button(action: {
+                    scene.gameUnpause()
+                    viewModel.setGameUnpause()
+                }) {
+                    Text("Continue")
+                        .font(.custom("ArcadeInterlaced", size: 24))
+                        .padding()
+                        .background(Color.green.opacity(0.2))
+                        .cornerRadius(10)
+                }
+                .foregroundColor(.green)
+                
+                Button(action: {
+                    viewModel.setGameUnpause()
+                    viewModel.resetGame()
+                    scene.reset()
+                }) {
+                    Text("Restart")
+                        .font(.custom("ArcadeInterlaced", size: 24))
+                        .padding()
+                        .cornerRadius(10)
+                }
+                .foregroundStyle(.white)
+
+                Button(action: { isPresented = false }) {
+                    Text("Return to Map")
+                        .font(.custom("ArcadeInterlaced", size: 24))
+                }
                 .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-            
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black.opacity(0.75))
             Button(action: {
-                scene.gameUnpause()
-                viewModel.setGameUnpause()
             }) {
-                Text("Continue")
+                Image(systemName: "gearshape.fill")
                     .font(.custom("ArcadeInterlaced", size: 24))
-                    .padding()
-                    .background(Color.green.opacity(0.2))
-                    .cornerRadius(10)
+                    .background(.clear)
             }
             .foregroundColor(.green)
-            
-            Button(action: {
-                viewModel.setGameUnpause()
-                viewModel.resetGame()
-                scene.reset()
-            }) {
-                Text("Restart")
-                    .font(.custom("ArcadeInterlaced", size: 24))
-                    .padding()
-                    .cornerRadius(10)
-            }
-            .foregroundStyle(.white)
-
-            Button(action: { isPresented = false }) {
-                Text("Return to Map")
-                    .font(.custom("ArcadeInterlaced", size: 24))
-            }
-            .foregroundColor(.white)
+            .padding()
+            .clipShape(RoundedRectangle(cornerRadius:  10))
+            .padding(14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.75))
     }
+        
 }
