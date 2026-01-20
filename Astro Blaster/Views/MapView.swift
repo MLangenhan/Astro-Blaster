@@ -38,6 +38,7 @@ struct MapView: View {
 
     @State private var pendingArenaId: String? = nil
     @State private var pendingArenaName: String? = nil
+
     
     // MARK: - Initial Map Camera Position
     // The map will start centered around Aachen
@@ -45,6 +46,8 @@ struct MapView: View {
         center: CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342),
         span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
     ))
+    @State private var displayedUserCoordinate: CLLocationCoordinate2D =
+        CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342) // User Position
     
     // MARK: - Arena Locations
     // List of all arenas that will appear as annotations on the map
@@ -96,7 +99,6 @@ struct MapView: View {
     var body: some View {
         
         ZStack{
-            
             // Map view without default POIs
             Map(position: $cameraPosition) {
                 ForEach(places) { place in
@@ -109,24 +111,31 @@ struct MapView: View {
                 }
                 
                 // User-Location
-                if let userLocation = locationManager.userLocation {
-                    Annotation("You", coordinate: userLocation.coordinate) {
-                        UserLocationAnnotationView()
-                    }
+                Annotation("You", coordinate: displayedUserCoordinate) {
+                    UserLocationAnnotationView()
                 }
+                
             }
             .onChange(of: locationManager.userLocation) { _, newLocation in
-                guard let userLocation = newLocation, !initialRegionSet else { return }
+                
+                // User location update
+                guard let userLocation = newLocation else { return }
+
+                // User pin on real position
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    displayedUserCoordinate = userLocation.coordinate
+                }
+                                
+                guard !initialRegionSet else { return }
 
                 let region = MKCoordinateRegion(
                     center: userLocation.coordinate,
                     span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
                 )
 
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    cameraPosition = .region(region)
-                }
-
+                cameraPosition = .region(region)
+                
+                hasInitialCenterMoved = true         // Dont change it animore in .onAppear
                 initialRegionSet = true
             }
             .mapStyle(.standard(                  // Settings for Myterious Map
@@ -154,7 +163,10 @@ struct MapView: View {
                                 withAnimation(.none) {
                                     // Reset position
                                     newRegion.center.latitude -= 0.00001
-                                    cameraPosition = .region(newRegion)
+                                    // Only go back to old position, if player position not loaded yet
+                                    if !initialRegionSet{
+                                        cameraPosition = .region(newRegion)
+                                    }
                                 }
                             }
                         }
