@@ -15,7 +15,7 @@ struct GameView: View {
     @State private var scene: GameScene
     @State private var hasTimeElapsed = false
     @State var musicVolume: Float = 0.5
-    @State var soundEffectsEnabled = true
+    @State private var soundEffectsEnabled = true
  
     private let arenaId: String
     private let arenaName: String
