@@ -18,8 +18,8 @@ final class GameViewModel: ObservableObject {
     @Published var highscore: Int = 0
     
     // MARK: - Logic & Persistence
-    private var highscoreKey: String = "Highscore"
-
+    private let highscoreKey: String // stored once
+    
     let maxDifficulty: CGFloat
     let arenaId: String
     let arenaName: String
@@ -31,6 +31,12 @@ final class GameViewModel: ObservableObject {
         self.maxDifficulty = maxDifficulty
         self.arenaId = arenaId
         self.arenaName = arenaName
+        
+        // Initialize the key now that arenaId exists
+        self.highscoreKey = "Highscore_\(arenaId)"
+        
+        // Now safe to load highscore
+        loadHighscore()
     }
     
     func loadHighscore() {
@@ -60,7 +66,6 @@ final class GameViewModel: ObservableObject {
     
     func setGamePause() {
         isGamePaused = true
-        
     }
     
     func setGameUnpause() {
