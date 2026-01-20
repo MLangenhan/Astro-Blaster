@@ -16,18 +16,29 @@ struct GameView: View {
     @State private var hasTimeElapsed = false
     @State var musicVolume: Float = 0.5
     @State var soundEffectsEnabled = true
-    
-    init(maxDifficulty: CGFloat, isPresented: Binding<Bool>) {
-            self._isPresented = isPresented
-            let vm = GameViewModel(maxDifficulty: maxDifficulty)
-            self._viewModel = StateObject(wrappedValue: vm)
-            
-            // Initialize scene and link to VM
-            let newScene = GameScene()
-            newScene.viewModel = vm
-            self._scene = State(initialValue: newScene)
-        }
+ 
+    private let arenaId: String
+    private let arenaName: String
 
+    init(maxDifficulty: CGFloat,
+             arenaId: String,
+             arenaName: String,
+         isPresented: Binding<Bool>
+    ) {
+        self._isPresented = isPresented
+            self.arenaId = arenaId
+            self.arenaName = arenaName
+
+        let vm = GameViewModel(maxDifficulty: maxDifficulty,
+                                   arenaId: arenaId,
+                                   arenaName: arenaName
+        )
+        self._viewModel = StateObject(wrappedValue: vm)
+        
+        let newScene = GameScene()
+        newScene.viewModel = vm
+        self._scene = State(initialValue: newScene)
+    }
 
     private func setupScene(size: CGSize) {
         scene.size = size

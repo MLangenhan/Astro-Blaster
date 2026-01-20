@@ -11,12 +11,11 @@ import MapKit
 // MARK: - Arena Places
 // Represents an arena on the map with a name, description, and coordinates
 struct ArenaPlace: Identifiable {
-    let id = UUID()
+    let id: String
     let name: String
     let description: String
     let difficulty: Int
     let coordinate: CLLocationCoordinate2D}
-
 
 // MARK: - Map View
 struct MapView: View {
@@ -37,7 +36,8 @@ struct MapView: View {
     @State private var showSettings = false             // Show settings
     @State private var initialRegionSet = false // Track, ob wir schon auf User zentriert haben
 
-
+    @State private var pendingArenaId: String? = nil
+    @State private var pendingArenaName: String? = nil
     
     // MARK: - Initial Map Camera Position
     // The map will start centered around Aachen
@@ -50,6 +50,7 @@ struct MapView: View {
     // List of all arenas that will appear as annotations on the map
     private let places: [ArenaPlace] = [
         ArenaPlace(
+            id: "dom-aachen",
             name: "Dom Aachen",
             description: "Fight at Dom Aachen.",
             difficulty: 14,
@@ -59,6 +60,7 @@ struct MapView: View {
             )
         ),
         ArenaPlace(
+            id: "rwth-aachen",
             name: "RWTH Aachen",
             description: "Fight at RWTH Aachen.",
             difficulty: 4,
@@ -68,6 +70,7 @@ struct MapView: View {
             )
         ),
         ArenaPlace(
+            id: "tivoli",
             name: "Tivoli",
             description: "Fight at Tivoli.",
             difficulty: 6,
@@ -77,6 +80,7 @@ struct MapView: View {
             )
         ),
         ArenaPlace(
+            id: "end-game",
             name: "End Game",
             description: "Fight at End Game.",
             difficulty: 10,
@@ -165,19 +169,34 @@ struct MapView: View {
                     difficulty: 5,                      // later arena difficulty
                     onClose: { selectedPlace = nil },
                     onOpenFullScreen: {
+                        // Capture arena parameters before dismissing the sheet
+                        pendingArenaId = place.id
+                        pendingArenaName = place.name
                         // Close sheet
                         selectedPlace = nil
                         // Arena difficulty
                         arenaDifficulty = place.difficulty
                         // Set state for GameView
+                        // Present the game view
                         navigateToGameView = true
-                        // Set state for HighScore Table
                     }
                 )
             }
-            .fullScreenCover(isPresented: $navigateToGameView) {
-                //MARK:  This only Active If player is near the point!!! LATER ....
-                GameView(maxDifficulty: CGFloat(arenaDifficulty), isPresented: $navigateToGameView)
+            .fullScreenCover(isPresented: $navigateToGameView, onDismiss: {
+                // Clear pending values after dismissing GameView
+                pendingArenaId = nil
+                pendingArenaName = nil
+            }) {
+                if let id = pendingArenaId, let name = pendingArenaName {
+                    GameView(
+                        maxDifficulty: 14,
+                        arenaId: id,
+                        arenaName: name,
+                        isPresented: $navigateToGameView
+                    )
+                } else {
+                    EmptyView()
+                }
             }
             
             Rectangle()
@@ -236,3 +255,4 @@ struct MapView: View {
 #Preview {
     MapView()
 }
+

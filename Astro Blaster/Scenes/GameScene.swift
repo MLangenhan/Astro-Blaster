@@ -13,7 +13,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Configuration
     private let difficultyTimeConstant: CGFloat = 45.0 // ~2.5 min to reach max difficulty
-    weak var viewModel: GameViewModel?
+    var viewModel: GameViewModel?
     
     // MARK: Audio
     var backgroundMusic: AVAudioPlayer?
@@ -712,6 +712,32 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         backgroundMusic?.stop()
         playSFX("gameover.mp3", volume: backgroundMusic!.volume) // game over sound effect
         physicsWorld.speed = 0 // stop the game
+        
+        // Submit score asynchronously
+        Task {
+            await submitScore()
+        }
+    }
+    
+    private func submitScore() async {
+        guard let vm = viewModel else { return }
+
+        let scoreEntry = ScoreEntry(
+            playerName: Player.shared.name,
+            arenaId: vm.arenaId,
+            arenaName: vm.arenaName,
+            score: vm.scoreValue,
+            maxDifficulty: Int(vm.maxDifficulty),
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
+
+        do {
+            let service = BackendService()
+            try await service.submitScore(score: scoreEntry)
+            print("Score submitted successfully")
+        } catch {
+            print("Failed to submit score:", error)
+        }
     }
     
     //MARK: Game Paused

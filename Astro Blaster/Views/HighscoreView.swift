@@ -9,14 +9,14 @@ import SwiftUI
 import CoreLocation
 
 struct HighscoreView: View {
+    
+    @State private var scores: [ScoreEntry] = []
 
     let place: ArenaPlace
     
-    var scores: [String: Int] = [:] // Scores of the players
-    
-    private var sortedScores: [(key: String, value: Int)] {
-        scores.sorted { $0.value > $1.value }
-    }
+//    private var sortedScores: [(key: String, value: Int)] {
+//        scores.sorted { $0.value > $1.value }
+//    }
     
     @Environment(\.dismiss) private var dismiss
     
@@ -45,7 +45,7 @@ struct HighscoreView: View {
 
             // Highscore List
             List {
-                ForEach(Array(sortedScores.prefix(10).enumerated()), id: \.element.key) { index, entry in
+                ForEach(Array(scores.enumerated()), id: \.element._id) { index, entry in
                     HStack {
                         Text("#\(index + 1)")
                             .font(.custom("ArcadeInterlaced", size: 20))
@@ -53,13 +53,13 @@ struct HighscoreView: View {
                         
                         Spacer()
                         
-                        Text(entry.key)
+                        Text(entry.playerName)
                             .font(.custom("ArcadeInterlaced", size: 12))
                             .foregroundColor(.white)
                         
                         Spacer()
                         
-                        Text("\(entry.value) pts")
+                        Text("\(entry.score) pts")
                             .foregroundColor(.green)
                     }
                     .padding(.vertical, 4)
@@ -72,41 +72,17 @@ struct HighscoreView: View {
             .background(Color.black)
             .cornerRadius(12)
             .padding()
-
+        }
+        .onAppear {
+            Task {
+                do {
+                    let service = BackendService()
+                    self.scores = try await service.fetchArenaHighscores(arenaId: place.id)
+                } catch {
+                    print("Failed to fetch highscores:", error)
+                }
+            }
         }
         .background(Color.black.ignoresSafeArea())
     }
-}
-
-
-
-#Preview {
-    HighscoreView(place: ArenaPlace(
-        name: "Test Arena",
-        description: "Description",
-        difficulty: 10,
-        coordinate: .init(latitude: 0, longitude: 0)
-    ), scores: [
-        "Alice": 95,
-        "Bob": 82,
-        "Charlie": 90,
-        "Nova": 1870,
-        "Liam": 1240,
-        "Mila": 760,
-        "Orion": 1995,
-        "Zara": 430,
-        "Elias": 1580,
-        "Luna": 980,
-        "Kai": 310,
-        "Freya": 1425,
-        "Noah": 670,
-        "Ivy": 185,
-        "Atlas": 1320,
-        "Mason": 540,
-        "Aria": 1760,
-        "Finn": 860,
-        "Skye": 225,
-        "Leo": 1490
-    ]
-    )
 }

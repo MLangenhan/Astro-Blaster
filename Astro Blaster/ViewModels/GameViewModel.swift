@@ -21,10 +21,16 @@ final class GameViewModel: ObservableObject {
     private var highscoreKey: String = "Highscore"
 
     let maxDifficulty: CGFloat
-    
-    init(maxDifficulty: CGFloat) {
+    let arenaId: String
+    let arenaName: String
+
+    init(maxDifficulty: CGFloat,
+         arenaId: String = "",
+         arenaName: String = ""
+    ) {
         self.maxDifficulty = maxDifficulty
-        loadHighscore()
+        self.arenaId = arenaId
+        self.arenaName = arenaName
     }
     
     func loadHighscore() {
@@ -60,4 +66,24 @@ final class GameViewModel: ObservableObject {
     func setGameUnpause() {
         isGamePaused = false
     }
+    
+    func submitScore(arenaId: String, arenaName: String, score: Int, maxDifficulty: Int) async {
+        let newScore = ScoreEntry(
+            _id: nil,
+            playerName: Player.shared.name,
+            arenaId: arenaId,
+            arenaName: arenaName,
+            score: score,
+            maxDifficulty: maxDifficulty,
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
+        
+        do {
+            let service = BackendService()
+            try await service.submitScore(score: newScore)
+        } catch {
+            print("Failed to submit score:", error)
+        }
+    }
+
 }

@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct ProfileView: View {
-
+    
     @Environment(\.dismiss) private var dismiss
+    @State private var playerName: String = Player.shared.name
     
     var body: some View {
         VStack {
             
-            // Back-Button
+            // Back Button
             HStack {
                 Button {
                     dismiss()
@@ -28,18 +29,47 @@ struct ProfileView: View {
             }
             .padding()
             
-            // Highscore-Header
+            // Header
             Text("Profile")
                 .font(.custom("ArcadeInterlaced", size: 28))
                 .foregroundColor(.green)
                 .padding(.bottom, 10)
             
             Spacer()
+            
+            // Player Name Editor
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Your Name")
+                    .font(.custom("ArcadeInterlaced", size: 14))
+                    .foregroundColor(.white)
+                
+                TextField("Enter your name", text: $playerName)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.bottom, 10)
+            }
+            .padding(.horizontal)
+            
+            // Save Button
+            Button {
+                Player.shared.name = playerName
+                Player.shared.save()
+            } label: {
+                Text("Save")
+                    .font(.custom("ArcadeInterlaced", size: 16))
+                    .foregroundColor(.green)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.green, lineWidth: 2)
+                    )
+            }
+            .padding(.horizontal)
+            
+            Spacer()
         }
         .background(Color.black.ignoresSafeArea())
     }
-}
-
-#Preview {
-    ProfileView()
 }
