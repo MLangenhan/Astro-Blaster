@@ -7,7 +7,7 @@
 
 import Foundation
 final class BackendService {
-    private let baseURL = URL(string: "http://192.168.0.205:3000")!
+    private let baseURL = URL(string: "https://auntlike-disquietedly-mariella.ngrok-free.dev")!
     
     func fetchArenaHighscores(arenaId: String) async throws -> [ScoreEntry] {
         let url = baseURL.appendingPathComponent("/scores/arena/\(arenaId)")
