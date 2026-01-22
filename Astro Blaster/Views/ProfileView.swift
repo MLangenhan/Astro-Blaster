@@ -37,17 +37,57 @@ struct ProfileView: View {
                 .foregroundColor(.green)
                 .padding(.bottom, 10)
             
-            Spacer()
+            Text(playerName)
+                .font(.custom("ArcadeInterlaced", size: 20))
+                .foregroundColor(.green)
+                .padding(.bottom, 40)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("All-Time Score:")
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.white)
+                    
+                    Text("\(sumOfScores)")
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.white)
+                }
+                
+                HStack {
+                    Text("All-Time High:")
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.white)
+                    if !scores.isEmpty {
+                    Text(" \(scores[0].score)")
+                            .font(.custom("ArcadeInterlaced", size: 14))
+                            .foregroundColor(.white)
+                    } else {
+                        Text(" 0")
+                            .font(.custom("ArcadeInterlaced", size: 14))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                Divider()
+                    .overlay(.white)
+                    .frame(height:4)
+                    .padding(.bottom,40)
+                    .padding(.top,40)
             
             // Player Name Editor
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Your Name")
-                    .font(.custom("ArcadeInterlaced", size: 14))
-                    .foregroundColor(.white)
+                HStack {
+                    Text("Name")
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.white)
+                    
+                    TextField("Enter your name", text: $playerName)
+                        .textFieldStyle(.roundedBorder)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white, lineWidth: 1)
+                        )
+                }
                 
-                TextField("Enter your name", text: $playerName)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.bottom, 10)
             }
             .padding(.horizontal)
             
@@ -72,29 +112,6 @@ struct ProfileView: View {
             
             Spacer()
             Spacer()
-            
-            HStack {
-                Text("All-Time Score:")
-                    .font(.custom("ArcadeInterlaced", size: 20))
-                    .foregroundColor(.white)
-                
-                Text("\(sumOfScores)")
-                    .font(.custom("ArcadeInterlaced", size: 14))
-                    .foregroundColor(.white)
-            }
-            
-            Spacer()
-            if !scores.isEmpty {
-                HStack {
-                    Text("All-Time Highscore:")
-                        .font(.custom("ArcadeInterlaced", size: 20))
-                        .foregroundColor(.white)
-                    
-                    Text("\(scores[0].score)")
-                            .font(.custom("ArcadeInterlaced", size: 14))
-                            .foregroundColor(.white)
-                }
-            }
     
         }
         .onAppear() {

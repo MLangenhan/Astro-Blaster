@@ -242,7 +242,7 @@ struct MapView: View {
                         }
 
                     // Settings Button
-                    CircleIconButton(systemImage: "list.star")
+                    CircleIconButton(systemImage: "trophy.fill")
                         .onTapGesture {
                             showSettings = true
                         }

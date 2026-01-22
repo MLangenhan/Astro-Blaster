@@ -16,10 +16,11 @@ struct SettingsView: View {
     var body: some View {
         VStack {
             // Highscore-Header
-            Text("Global Leaderboard")
+            Text("Leaderboard")
                 .font(.custom("ArcadeInterlaced", size: 28))
                 .foregroundColor(.green)
                 .padding(.bottom, 10)
+                .padding(.top, 20)
             
             HighscoreView(scores: $scores)
             
