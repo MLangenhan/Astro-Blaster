@@ -10,7 +10,7 @@ import CoreLocation
 
 struct HighscoreView: View {
     
-    @State private var scores: [ScoreEntry] = []
+    @Binding var scores: [ScoreEntry]
 
     let place: ArenaPlace
     
@@ -45,7 +45,7 @@ struct HighscoreView: View {
 
             // Highscore List
             List {
-                ForEach(Array(scores.enumerated()), id: \.element._id) { index, entry in
+                ForEach(Array(scores.enumerated()), id: \.offset) { index, entry in
                     HStack {
                         Text("#\(index + 1)")
                             .font(.custom("ArcadeInterlaced", size: 20))
@@ -72,16 +72,6 @@ struct HighscoreView: View {
             .background(Color.black)
             .cornerRadius(12)
             .padding()
-        }
-        .onAppear {
-            Task {
-                do {
-                    let service = BackendService()
-                    self.scores = try await service.fetchArenaHighscores(arenaId: place.id)
-                } catch {
-                    print("Failed to fetch highscores:", error)
-                }
-            }
         }
         .background(Color.black.ignoresSafeArea())
     }

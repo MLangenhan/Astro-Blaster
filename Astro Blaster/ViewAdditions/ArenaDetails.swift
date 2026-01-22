@@ -18,6 +18,7 @@ struct ArenaDetails: View {
     let onClose: () -> Void                 // Action to close the sheet
     let onOpenFullScreen: () -> Void        // New closure for full-screen navigation
     
+    @State var arenaScores : [ScoreEntry] = []
     @State private var showHighscores = false //Show highscore panel
     
     var playerscores: [String: Int] = [
@@ -120,12 +121,22 @@ struct ArenaDetails: View {
             .buttonStyle(.borderedProminent)
             .tint(.green)
             .font(.custom("ArcadeInterlaced", size: 12))
-
+        }
+        .onAppear {
+            Task {
+                do {
+                    let service = BackendService()
+                    arenaScores = try await service.fetchArenaHighscores(arenaId: place.id)
+                    print(arenaScores)
+                } catch {
+                    print("Failed to fetch highscores:", error)
+                }
+            }
         }
         .padding() // Limit the sheet height
         .presentationDetents([.height(250)])
         .fullScreenCover(isPresented: $showHighscores) {
-            HighscoreView(place: place)
+            HighscoreView(scores: $arenaScores, place: place)
         }
         .ignoresSafeArea()
     }
