@@ -12,6 +12,7 @@ struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var playerName: String = Player.shared.name
     @State private var scores: [ScoreEntry] = []
+    @State private var sumOfScores: Int = 0
     
     var body: some View {
         VStack {
@@ -69,15 +70,32 @@ struct ProfileView: View {
             }
             .padding(.horizontal)
             
-            HighscoreView(scores: $scores)
+            Spacer()
+            Spacer()
+            
+            HStack {
+                Text("All-Time Score:")
+                    .font(.custom("ArcadeInterlaced", size: 20))
+                    .foregroundColor(.white)
+                
+                Text("\(sumOfScores)")
+                    .font(.custom("ArcadeInterlaced", size: 14))
+                    .foregroundColor(.white)
+            }
             
             Spacer()
+            
+            
+            HighscoreView(scores: $scores)
+            
+            Spacer()    
         }
         .onAppear() {
             Task {
                 do {
                     let service = BackendService()
                     scores = try await service.getPersonalHighscores(playerId: playerName)
+                    sumOfScores = scores.reduce(0) { $0 + $1.score }
                 }
                 catch { print("failed fetching personal leaderboard") }
             }
