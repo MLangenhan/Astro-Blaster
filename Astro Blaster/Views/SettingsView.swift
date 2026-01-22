@@ -28,10 +28,20 @@ struct SettingsView: View {
         .onAppear() {
             Task {
                 do {
+                    var seenPlayers : Set<String> = []
+                    var filteredScores: [ScoreEntry] = []
                     let service = BackendService()
                     scores = try await service.fetchGlobalLeaderboard()
-                }
-                catch { print("failed fetching global leaderboard") }
+                    filteredScores = scores.filter {entry in
+                        if seenPlayers.contains(entry.playerName){
+                            return false
+                        } else {
+                            seenPlayers.insert(entry.playerName)
+                            return true
+                        }
+                    }
+                    scores = filteredScores
+                } catch { print("failed fetching global leaderboard") }
             }
         }
         .background(Color.black.ignoresSafeArea())
