@@ -136,7 +136,7 @@ struct ArenaDetails: View {
         .padding() // Limit the sheet height
         .presentationDetents([.height(250)])
         .fullScreenCover(isPresented: $showHighscores) {
-            HighscoreView(scores: $arenaScores, place: place)
+            HighscoreView(scores: $arenaScores)
         }
         .ignoresSafeArea()
     }

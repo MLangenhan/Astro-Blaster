@@ -242,7 +242,7 @@ struct MapView: View {
                         }
 
                     // Settings Button
-                    CircleIconButton(systemImage: "gearshape.fill")
+                    CircleIconButton(systemImage: "list.star")
                         .onTapGesture {
                             showSettings = true
                         }

@@ -11,8 +11,6 @@ import CoreLocation
 struct HighscoreView: View {
     
     @Binding var scores: [ScoreEntry]
-
-    let place: ArenaPlace
     
 //    private var sortedScores: [(key: String, value: Int)] {
 //        scores.sorted { $0.value > $1.value }

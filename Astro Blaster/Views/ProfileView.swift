@@ -11,6 +11,7 @@ struct ProfileView: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var playerName: String = Player.shared.name
+    @State private var scores: [ScoreEntry] = []
     
     var body: some View {
         VStack {
@@ -68,7 +69,18 @@ struct ProfileView: View {
             }
             .padding(.horizontal)
             
+            HighscoreView(scores: $scores)
+            
             Spacer()
+        }
+        .onAppear() {
+            Task {
+                do {
+                    let service = BackendService()
+                    scores = try await service.getPersonalHighscores(playerId: playerName)
+                }
+                catch { print("failed fetching personal leaderboard") }
+            }
         }
         .background(Color.black.ignoresSafeArea())
     }
