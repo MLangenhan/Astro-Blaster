@@ -125,9 +125,19 @@ struct ArenaDetails: View {
         .onAppear {
             Task {
                 do {
+                    var seenPlayers : Set<String> = []
+                    var filteredScores: [ScoreEntry] = []
                     let service = BackendService()
                     arenaScores = try await service.fetchArenaHighscores(arenaId: place.id)
-                    print(arenaScores)
+                    filteredScores = arenaScores.filter {entry in
+                        if seenPlayers.contains(entry.playerName){
+                            return false
+                        } else {
+                            seenPlayers.insert(entry.playerName)
+                            return true
+                        }
+                    }
+                    arenaScores = filteredScores
                 } catch {
                     print("Failed to fetch highscores:", error)
                 }
