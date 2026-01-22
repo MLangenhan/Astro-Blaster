@@ -84,11 +84,18 @@ struct ProfileView: View {
             }
             
             Spacer()
-            
-            
-            HighscoreView(scores: $scores)
-            
-            Spacer()    
+            if !scores.isEmpty {
+                HStack {
+                    Text("All-Time Highscore:")
+                        .font(.custom("ArcadeInterlaced", size: 20))
+                        .foregroundColor(.white)
+                    
+                    Text("\(scores[0].score)")
+                            .font(.custom("ArcadeInterlaced", size: 14))
+                            .foregroundColor(.white)
+                }
+            }
+    
         }
         .onAppear() {
             Task {
