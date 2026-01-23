@@ -246,6 +246,26 @@ struct MapView: View {
                         .onTapGesture {
                             showSettings = true
                         }
+                    
+                    // Location Button
+                    CircleIconButton(systemImage: "location.north.fill")
+                        .rotationEffect(.degrees(45))
+                        .onTapGesture {
+                            guard let userLocation = locationManager.userLocation else { return }
+
+                                    let region = MKCoordinateRegion(
+                                        center: userLocation.coordinate,
+                                        span: MKCoordinateSpan(
+                                            latitudeDelta: 0.05,
+                                            longitudeDelta: 0.05
+                                        )
+                                    )
+
+                                    withAnimation(.easeInOut(duration: 0.4)) {
+                                        cameraPosition = .region(region)
+                                    }
+                            
+                        }
 
                 }
                 .padding(.bottom, 40)
@@ -263,6 +283,8 @@ struct MapView: View {
         }
     }
 }
+
+
 
 #Preview {
     MapView()
