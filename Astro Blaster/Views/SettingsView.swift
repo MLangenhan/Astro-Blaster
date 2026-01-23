@@ -15,17 +15,53 @@ struct SettingsView: View {
     
     var body: some View {
         VStack {
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .font(.custom("ArcadeInterlaced", size: 14))
+                        .foregroundColor(.green)
+                }
+
+                Spacer()
+            }
+            .padding()
+            
             // Highscore-Header
             Text("Leaderboard")
                 .font(.custom("ArcadeInterlaced", size: 28))
                 .foregroundColor(.green)
                 .padding(.bottom, 10)
-                .padding(.top, 20)
-            
-            HighscoreView(scores: $scores)
-            
-            
+            List {
+                ForEach(Array(scores.enumerated()), id: \.offset) { index, entry in
+                    HStack {
+                        Text("#\(index + 1)")
+                            .font(.custom("ArcadeInterlaced", size: 20))
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Text(entry.playerName)
+                            .font(.custom("ArcadeInterlaced", size: 12))
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Text("\(entry.score) pts")
+                            .foregroundColor(.green)
+                    }
+                    .padding(.vertical, 4)
+                    .listRowBackground(Color.black)
+                    .listRowInsets(EdgeInsets())
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.black)
+            .cornerRadius(12)
         }
+        .background(Color.black.ignoresSafeArea())
         .onAppear() {
             Task {
                 do {
@@ -45,6 +81,5 @@ struct SettingsView: View {
                 } catch { print("failed fetching global leaderboard") }
             }
         }
-        .background(Color.black.ignoresSafeArea())
     }
 }
