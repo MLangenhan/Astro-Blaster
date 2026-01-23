@@ -49,51 +49,6 @@ struct MapView: View {
     @State private var displayedUserCoordinate: CLLocationCoordinate2D =
         CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342) // User Position
     
-    // MARK: - Arena Locations
-    // List of all arenas that will appear as annotations on the map
-    private let places: [ArenaPlace] = [
-        ArenaPlace(
-            id: "dom-aachen",
-            name: "Dom Aachen",
-            description: "Fight at Dom Aachen.",
-            difficulty: 14,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.77535,
-                longitude: 6.08389
-            )
-        ),
-        ArenaPlace(
-            id: "rwth-aachen",
-            name: "RWTH Aachen",
-            description: "Fight at RWTH Aachen.",
-            difficulty: 4,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.77846,
-                longitude: 6.06099
-            )
-        ),
-        ArenaPlace(
-            id: "tivoli",
-            name: "Tivoli",
-            description: "Fight at Tivoli.",
-            difficulty: 6,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.793209,
-                longitude: 6.098766
-            )
-        ),
-        ArenaPlace(
-            id: "end-game",
-            name: "End Game",
-            description: "Fight at End Game.",
-            difficulty: 10,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.788902,
-                longitude: 6.057804
-            )
-        )
-    ]
-    
     
     // MARK: - Body
     var body: some View {
@@ -101,7 +56,8 @@ struct MapView: View {
         ZStack{
             // Map view without default POIs
             Map(position: $cameraPosition) {
-                ForEach(places) { place in
+                
+                ForEach(ArenaPlaces.all) { place in
                     Annotation(place.name, coordinate: place.coordinate) {
                         ArenaAnnotationView(place: place)
                             .onTapGesture {
