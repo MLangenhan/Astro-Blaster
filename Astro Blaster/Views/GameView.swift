@@ -140,44 +140,43 @@ struct GameView: View {
                     .multilineTextAlignment(.center)
                 
                 Spacer()
-                VStack (alignment: .leading){
-                    HStack{
-                        Text("Volume")
-                            .font(.custom("ArcadeInterlaced", size: 10))
-                        Slider(value: $musicVolume, in: 0...1, step: 0.1, label: {})
-                            .onChange(of: musicVolume, {scene.backgroundMusic?.setVolume(musicVolume, fadeDuration: 0)})
-                            .tint(.green)
-                            .frame(width:200)
-                    }
-                    HStack {
-                        Text("Soundeffects")
-                            .font(.custom("ArcadeInterlaced", size: 10))
-                        if soundEffectsEnabled == true {
-                            Button(action: {
-                                scene.soundeffectsEnabled = false
-                                soundEffectsEnabled = false
-                            }) {
-                                Image(systemName: "checkmark.square")
-                                    .font(.custom("ArcadeInterlaced", size: 24))
-                                    .background(.clear)
+                
+                VStack(alignment: .leading, spacing: 18) {
+
+                            // VOLUME
+                            HStack(alignment: .center) {
+                                Text("Volume")
+                                    .font(.custom("ArcadeInterlaced", size: 12))
+                                    .foregroundColor(.green)
+                                    .frame(width: 150, alignment: .leading)
+
+                                Slider(value: $musicVolume, in: 0...1, step: 0.1, label: {})
+                                    .onChange(of: musicVolume) {
+                                        scene.backgroundMusic?.setVolume(musicVolume, fadeDuration: 0)
+                                    }
+                                    .tint(.green)
+                                    .frame(width: 180, height: 28)
                             }
-                            .foregroundColor(.green)
-                        
-                        } else {
-                            Button(action: {
-                                scene.soundeffectsEnabled = true
-                                soundEffectsEnabled = true
-                            }) {
-                                Image(systemName: "checkmark.square")
-                                    .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.clear, .green)
-                                    .font(.custom("ArcadeInterlaced", size: 24))
-                                    .background(.clear)
+
+                            // SOUND EFFECTS
+                            HStack(alignment: .center) {
+                                Text("SOUNDEFFECTS")
+                                    .font(.custom("ArcadeInterlaced", size: 12))
+                                    .foregroundColor(.green)
+                                    .frame(width: 150, alignment: .leading)
+
+                                Toggle("", isOn: $soundEffectsEnabled)
+                                    .toggleStyle(SwitchToggleStyle(tint: .green))
+                                    .labelsHidden()
+                                    .scaleEffect(0.9)
+                                    .frame(height: 28)
+                                    .onChange(of: soundEffectsEnabled) { _, newValue in
+                                        scene.soundeffectsEnabled = newValue
+                                    }
                             }
-                            .foregroundColor(.green)
                         }
-                    }
-                }
+                        .frame(maxWidth: 360)
+                        .frame(maxWidth: .infinity)
                 
                 Spacer()
                 
