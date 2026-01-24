@@ -229,7 +229,7 @@ struct MapView: View {
                 .animation(.easeInOut(duration: 0.25), value: selectedPlace == nil)
                 .allowsHitTesting(selectedPlace == nil)
                 .sheet(isPresented: $showSettings) {
-                    SettingsView()
+                    LeaderboardView()
                 }
                 .sheet(isPresented: $showProfile) {
                     ProfileView()

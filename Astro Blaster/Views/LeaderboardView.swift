@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SettingsView: View {
+struct LeaderboardView: View {
     
     @Environment(\.dismiss) private var dismiss
     
