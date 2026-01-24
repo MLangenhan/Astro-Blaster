@@ -11,11 +11,6 @@ import CoreLocation
 struct HighscoreView: View {
     
     @Binding var scores: [ScoreEntry]
-    
-//    private var sortedScores: [(key: String, value: Int)] {
-//        scores.sorted { $0.value > $1.value }
-//    }
-    
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -45,18 +40,21 @@ struct HighscoreView: View {
             List {
                 ForEach(Array(scores.enumerated()), id: \.offset) { index, entry in
                     HStack {
+                        //Position of the i-th Player, Counts from 0
                         Text("#\(index + 1)")
                             .font(.custom("ArcadeInterlaced", size: 20))
                             .foregroundColor(.white)
                         
                         Spacer()
                         
+                        //Name of the i-th Player
                         Text(entry.playerName)
                             .font(.custom("ArcadeInterlaced", size: 12))
                             .foregroundColor(.white)
                         
                         Spacer()
                         
+                        //All Time Highscore of i-th Player
                         Text("\(entry.score) pts")
                             .foregroundColor(.green)
                     }

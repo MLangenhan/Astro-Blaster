@@ -10,6 +10,7 @@ import SwiftUI
 struct UserLocationAnnotationView: View {
 
     var body: some View {
+        //Displays Arrow Icon on Player Positions
         Image(systemName: "location.fill")
             .resizable()
             .scaledToFit()

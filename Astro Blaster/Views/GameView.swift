@@ -16,10 +16,10 @@ struct GameView: View {
     @State private var hasTimeElapsed = false
     @State var musicVolume: Float = 0.5
     @State private var soundEffectsEnabled = true
- 
     private let arenaId: String
     private let arenaName: String
 
+    //Initialized Arena with given Properties
     init(maxDifficulty: CGFloat,
              arenaId: String,
              arenaName: String,
@@ -40,6 +40,7 @@ struct GameView: View {
         self._scene = State(initialValue: newScene)
     }
 
+    //Sets up Scene with Anchor-Point being the Middle of the Screen and the whole Screen being filled
     private func setupScene(size: CGSize) {
         scene.size = size
         scene.anchorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -54,7 +55,7 @@ struct GameView: View {
                     .ignoresSafeArea()
                     .statusBarHidden(true)
                     .gesture(
-                        // no need to distinguish between tap and drag
+                        // No need to Distinguish between Tap and Drag, therefore minimumDistance: 0
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 guard !viewModel.isGameOver else { return }
@@ -64,6 +65,8 @@ struct GameView: View {
                             .onEnded { _ in scene.beginDrag() }
                     )
                     .onAppear { setupScene(size: geo.size) }
+                
+                //Pause Button at the top right
                 Button(action: {
                     scene.gamePause()
                     viewModel.setGamePause()
@@ -77,9 +80,13 @@ struct GameView: View {
                 .clipShape(RoundedRectangle(cornerRadius:  10))
                 .padding(14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                
+                //Check if Game is over to cast gameOverOverlay
                 if viewModel.isGameOver {
                     gameOverOverlay
                 }
+                
+                //Check if Game is paused to cast gamePausedOverlay
                 if viewModel.isGamePaused {
                     gamePausedOverlay
                 }
@@ -97,6 +104,7 @@ struct GameView: View {
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             
+            //Achieved Score
             Text("Score: \(viewModel.scoreValue)")
                 .font(.custom("ArcadeInterlaced", size: 20))
                 .foregroundColor(.white)
@@ -104,6 +112,7 @@ struct GameView: View {
             
             Spacer()
             
+            //Button to Restart Game
             Button(action: {
                 viewModel.resetGame()
                 scene.reset()
@@ -116,6 +125,7 @@ struct GameView: View {
             }
             .foregroundColor(.green)
 
+            //Button to Return to Map
             Button(action: { isPresented = false }) {
                 Text("Return to Map")
                     .font(.custom("ArcadeInterlaced", size: 24))
@@ -143,7 +153,7 @@ struct GameView: View {
                 
                 VStack(alignment: .leading, spacing: 18) {
 
-                            // VOLUME
+                            // Background Music Slider
                             HStack(alignment: .center) {
                                 Text("Volume")
                                     .font(.custom("ArcadeInterlaced", size: 12))
@@ -158,7 +168,7 @@ struct GameView: View {
                                     .frame(width: 180, height: 28)
                             }
 
-                            // SOUND EFFECTS
+                            // Sound Effect Toggle
                             HStack(alignment: .center) {
                                 Text("SOUNDEFFECTS")
                                     .font(.custom("ArcadeInterlaced", size: 12))
@@ -180,6 +190,7 @@ struct GameView: View {
                 
                 Spacer()
                 
+                //Button to Continue Playing
                 Button(action: {
                     scene.gameUnpause()
                     viewModel.setGameUnpause()
@@ -192,6 +203,7 @@ struct GameView: View {
                 }
                 .foregroundColor(.green)
                 
+                //Button to Restart Game
                 Button(action: {
                     viewModel.setGameUnpause()
                     viewModel.resetGame()
@@ -204,6 +216,7 @@ struct GameView: View {
                 }
                 .foregroundStyle(.white)
 
+                //Button to Return to Map
                 Button(action: { isPresented = false }) {
                     Text("Return to Map")
                         .font(.custom("ArcadeInterlaced", size: 24))

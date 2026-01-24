@@ -8,8 +8,8 @@
 import SwiftUI
 import MapKit
 
-// MARK: - Arena Places
-// Represents an arena on the map with a name, description, and coordinates
+// Arena Places
+// Represents an Arena on the Map with a Name, Description, and Coordinates
 struct ArenaPlace: Identifiable {
     let id: String
     let name: String
@@ -17,7 +17,7 @@ struct ArenaPlace: Identifiable {
     let difficulty: Int
     let coordinate: CLLocationCoordinate2D}
 
-// MARK: - Map View
+// Map View
 struct MapView: View {
     
     // MARK: - User Location
@@ -28,20 +28,26 @@ struct MapView: View {
     }
     
     // MARK: - State Properties
-    @State private var selectedPlace: ArenaPlace?       // Currently selected place for showing details
-    @State private var navigateToGameView = false       // Trigger full-screen navigation of GameView
-    @State private var arenaDifficulty = 10              // Show profile
-    @State private var hasInitialCenterMoved = false    // Initial move of map only once
-    @State private var showProfile = false              // Show profile
-    @State private var showSettings = false             // Show settings
-    @State private var initialRegionSet = false // Track, ob wir schon auf User zentriert haben
-
+    // Currently Selected Place for Showing Details
+    @State private var selectedPlace: ArenaPlace?
+    // Trigger Full-Screen Navigation of GameView
+    @State private var navigateToGameView = false
+    // Show Profile
+    @State private var arenaDifficulty = 10
+    // Initial Move of Map only Once
+    @State private var hasInitialCenterMoved = false
+    // Show Profile
+    @State private var showProfile = false
+    // Show Settings
+    @State private var showSettings = false
+    // Track, if User is already Centered on Map
+    @State private var initialRegionSet = false
     @State private var pendingArenaId: String? = nil
     @State private var pendingArenaName: String? = nil
 
     
     // MARK: - Initial Map Camera Position
-    // The map will start centered around Aachen
+    // The Map will Start centered around Aachen
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342),
         span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
@@ -54,7 +60,7 @@ struct MapView: View {
     var body: some View {
         
         ZStack{
-            // Map view without default POIs
+            // Map View without Default Points of Interest
             Map(position: $cameraPosition) {
                 
                 ForEach(ArenaPlaces.all) { place in
@@ -66,7 +72,7 @@ struct MapView: View {
                     }
                 }
                 
-                // User-Location
+                // User Location
                 Annotation("You", coordinate: displayedUserCoordinate) {
                     UserLocationAnnotationView()
                 }
@@ -74,10 +80,10 @@ struct MapView: View {
             }
             .onChange(of: locationManager.userLocation) { _, newLocation in
                 
-                // User location update
+                // User Location Update
                 guard let userLocation = newLocation else { return }
 
-                // User pin on real position
+                // User Pin on Real Position
                 withAnimation(.easeInOut(duration: 0.3)) {
                     displayedUserCoordinate = userLocation.coordinate
                 }
@@ -90,22 +96,23 @@ struct MapView: View {
                 )
 
                 cameraPosition = .region(region)
-                
-                hasInitialCenterMoved = true         // Dont change it animore in .onAppear
+                // Dont change it anymore in .onAppear
+                hasInitialCenterMoved = true
                 initialRegionSet = true
             }
-            .mapStyle(.standard(                  // Settings for Myterious Map
+            // Settings for a more Myterious-looking Map
+            .mapStyle(.standard(
                 elevation: .flat,
                 emphasis: .muted,
                 pointsOfInterest: .excludingAll
                                ))
             .preferredColorScheme(.dark)
             .onAppear {
-                // Small latency, that map is loaded
+                // Small Latency, that Map is Loaded
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     // Only once
                     if !hasInitialCenterMoved {
-                        // Create new position
+                        // Create new Position
                         if let initialRegion = cameraPosition.region {
                             var newRegion = initialRegion
                             newRegion.center.latitude += 0.00001
@@ -119,7 +126,7 @@ struct MapView: View {
                                 withAnimation(.none) {
                                     // Reset position
                                     newRegion.center.latitude -= 0.00001
-                                    // Only go back to old position, if player position not loaded yet
+                                    // Only go back to old Position, if Player Position not Loaded yet
                                     if !initialRegionSet{
                                         cameraPosition = .region(newRegion)
                                     }
@@ -129,29 +136,30 @@ struct MapView: View {
                     }
                 }
             }
-            // Show a bottom sheet when a place is selected
+            // Show a Bottom Sheet when a Place is Selected
             .sheet(item: $selectedPlace) { place in
                 ArenaDetails(
                     place: place,
                     userLocation: locationManager.userLocation,
-                    difficulty: 5,                      // later arena difficulty
+                    // Can Edit each Arenas Difficulty
+                    difficulty: 5,
                     onClose: { selectedPlace = nil },
                     onOpenFullScreen: {
-                        // Capture arena parameters before dismissing the sheet
+                        // Capture Arena Parameters before Dismissing the Sheet
                         pendingArenaId = place.id
                         pendingArenaName = place.name
-                        // Close sheet
+                        // Close Sheet
                         selectedPlace = nil
-                        // Arena difficulty
+                        // Arena Difficulty
                         arenaDifficulty = place.difficulty
-                        // Set state for GameView
-                        // Present the game view
+                        // Set State for GameView
+                        // Present the GameView
                         navigateToGameView = true
                     }
                 )
             }
             .fullScreenCover(isPresented: $navigateToGameView, onDismiss: {
-                // Clear pending values after dismissing GameView
+                // Clear pending Values after Dismissing GameView
                 pendingArenaId = nil
                 pendingArenaName = nil
             }) {
@@ -185,7 +193,7 @@ struct MapView: View {
             }
             .allowsHitTesting(false)
             
-            // Own VStack for Headline, because allowsHitTesting = true
+            // Own VStack for Buttons, because allowsHitTesting = true
             VStack {
                 Spacer()
 

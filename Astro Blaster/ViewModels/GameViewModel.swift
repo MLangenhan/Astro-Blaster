@@ -11,19 +11,16 @@ import Combine
 
 final class GameViewModel: ObservableObject {
 
-    // MARK: - Published State
     @Published var isGameOver = false
     @Published var isGamePaused = false
     @Published var scoreValue: Int = 0
     @Published var highscore: Int = 0
-    
-    // MARK: - Logic & Persistence
     private let highscoreKey: String // stored once
-    
     let maxDifficulty: CGFloat
     let arenaId: String
     let arenaName: String
 
+    //Initialization of Arena
     init(maxDifficulty: CGFloat,
          arenaId: String = "",
          arenaName: String = ""
@@ -32,10 +29,10 @@ final class GameViewModel: ObservableObject {
         self.arenaId = arenaId
         self.arenaName = arenaName
         
-        // Initialize the key now that arenaId exists
+        // Initialize the Key now that arenaId exists
         self.highscoreKey = "Highscore_\(arenaId)"
         
-        // Now safe to load highscore
+        // Now safe to Load Highscore
         loadHighscore()
     }
     
@@ -47,6 +44,7 @@ final class GameViewModel: ObservableObject {
         UserDefaults.standard.set(highscore, forKey: highscoreKey)
     }
     
+    //Runs every Frame of Game
     func updateScore(points: Int) {
         scoreValue += points
         if scoreValue > highscore {
@@ -72,6 +70,7 @@ final class GameViewModel: ObservableObject {
         isGamePaused = false
     }
     
+    //Backend Call to Safe Player Score
     func submitScore(arenaId: String, arenaName: String, score: Int, maxDifficulty: Int) async {
         let newScore = ScoreEntry(
             _id: nil,

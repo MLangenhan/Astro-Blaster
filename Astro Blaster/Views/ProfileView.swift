@@ -42,6 +42,7 @@ struct ProfileView: View {
                 .foregroundColor(.green)
                 .padding(.bottom, 40)
             
+            //Display of All-Time Total Score and All-Time Highscore
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("All-Time Score:")
@@ -68,6 +69,7 @@ struct ProfileView: View {
                     }
                 }
                 
+                //Dividing Scores and Player Name Editor
                 Divider()
                     .overlay(.white)
                     .frame(height:4)
@@ -117,8 +119,10 @@ struct ProfileView: View {
         .onAppear() {
             Task {
                 do {
+                    //Backend Call to get all Highscores of a Player
                     let service = BackendService()
                     scores = try await service.getPersonalHighscores(playerId: playerName)
+                    //Calculating every Score ever Achieved Totaled into One
                     sumOfScores = scores.reduce(0) { $0 + $1.score }
                 }
                 catch { print("failed fetching personal leaderboard") }

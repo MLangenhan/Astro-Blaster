@@ -11,6 +11,7 @@ struct ArenaAnnotationView: View {
     let place: ArenaPlace
 
     var body: some View {
+        //Used to Display Arena Locations on MapView
         Image(systemName: "crown.fill")
             .resizable()
             .scaledToFit()

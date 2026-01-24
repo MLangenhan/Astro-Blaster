@@ -11,6 +11,7 @@ struct CircleIconButton: View {
     let systemImage: String
 
     var body: some View {
+        //Circle used to Display Buttons at the bottom of MapView
         Image(systemName: systemImage)
             .resizable()
             .scaledToFit()

@@ -9,42 +9,24 @@ import Foundation
 import SwiftUI
 import CoreLocation
 
-// MARK: - Arena Details Sheet
+//Arena Details Sheet
 struct ArenaDetails: View {
     
-    let place: ArenaPlace                   // The selected arena
-    let userLocation: CLLocation?           // User location
-    let difficulty: Int                     // Arena difficulty
-    let onClose: () -> Void                 // Action to close the sheet
-    let onOpenFullScreen: () -> Void        // New closure for full-screen navigation
-    
+    // The selected Arena
+    let place: ArenaPlace
+    // User Location
+    let userLocation: CLLocation?
+    // Arena Difficulty
+    let difficulty: Int
+    // Action to Close the Sheet
+    let onClose: () -> Void
+    // New Closure for Full-Screen Navigation
+    let onOpenFullScreen: () -> Void
     @State var arenaScores : [ScoreEntry] = []
-    @State private var showHighscores = false //Show highscore panel
-    
-    var playerscores: [String: Int] = [
-        "Alice": 95,
-        "Bob": 82,
-        "Charlie": 90,
-        "Nova": 1870,
-        "Liam": 1240,
-        "Mila": 760,
-        "Orion": 1995,
-        "Zara": 430,
-        "Elias": 1580,
-        "Luna": 980,
-        "Kai": 310,
-        "Freya": 1425,
-        "Noah": 670,
-        "Ivy": 185,
-        "Atlas": 1320,
-        "Mason": 540,
-        "Aria": 1760,
-        "Finn": 860,
-        "Skye": 225,
-        "Leo": 1490
-    ]
+    //Show Highscore Panel
+    @State private var showHighscores = false
 
-    // Calculate distance to arena
+    // Calculate Distance from Player to Arena
     private var distanceInMeters: Double? {
         guard let userLocation else { return nil }
 
@@ -56,7 +38,7 @@ struct ArenaDetails: View {
         return userLocation.distance(from: arenaLocation)
     }
 
-    // Distance has to be under or equal 200 meters
+    // Distance has to be below or equal to 200 Meters
     private var isInRange: Bool {
         guard let distanceInMeters else { return false }
         return distanceInMeters <= 200
@@ -65,12 +47,12 @@ struct ArenaDetails: View {
     var body: some View {
         VStack(spacing: 16) {
 
-            // MARK: - Title
+            // Arena Name displayed on top
             Text(place.name)
                 .font(.custom("ArcadeInterlaced", size: 24))
                 .foregroundColor(.green)
 
-            // MARK: - Description
+            // Arena Description
             Text(place.description)
                 .font(.custom("ArcadeInterlaced", size: 15))
                 .foregroundColor(.white)
@@ -79,18 +61,19 @@ struct ArenaDetails: View {
             Divider()
                 .background(Color.green) // grüne Divider
 
-            // MARK: - Buttons
+            // Buttons
             HStack(spacing: 20) {
-                
+                // Calls the Closure to Close the Sheet
                 Button("Close") {
-                    onClose()               // Calls the closure to close the sheet
+                    onClose()
                 }
                 .buttonStyle(.bordered)
                 .tint(.green)
                 .font(.custom("ArcadeInterlaced", size: 12))
 
                 Button("FIGHT!!!") {
-                    onOpenFullScreen()      // Trigger full-screen navigation
+                    // Trigger Full-Screen Navigation
+                    onOpenFullScreen()
                 }
                 .disabled(!isInRange)
                 .buttonStyle(.borderedProminent)
@@ -98,15 +81,15 @@ struct ArenaDetails: View {
                 .font(.custom("ArcadeInterlaced", size: 12))
             }
 
-            // MARK: - Check if User near the arena
+            // Check if User is in Range of Arena
             if let distance = distanceInMeters {
                 Text(isInRange
-                     ? "🟢 In Reichweite (\(Int(distance)) m)"
-                     : "🔴 Zu weit entfernt (\(Int(distance)) m)")
+                     ? "🟢 Arena Is Within Reach (\(Int(distance)) m)"
+                     : "🔴 Arena Is Too Far Away (\(Int(distance)) m)")
                     .font(.custom("ArcadeInterlaced", size: 12))
                     .foregroundColor(.white)
             } else {
-                Text("📍 Standort wird ermittelt …")
+                Text("📍 Standort is being determined …")
                     .font(.custom("ArcadeInterlaced", size: 12))
                     .foregroundColor(.white)
             }
@@ -114,7 +97,7 @@ struct ArenaDetails: View {
             Divider()
                 .background(Color.green)
             
-            // MARK: - Highscore Button
+            // Highscore of Arena Button
             Button("Highscores of \(place.name)") {
                 showHighscores = true
             }
@@ -127,11 +110,15 @@ struct ArenaDetails: View {
                 do {
                     var seenPlayers : Set<String> = []
                     var filteredScores: [ScoreEntry] = []
+                    //Backend Call to get each Players Scores
                     let service = BackendService()
                     arenaScores = try await service.fetchArenaHighscores(arenaId: place.id)
+                    //Array where each Ülayer only occurs once, so Backend Call needs to be Filtered
                     filteredScores = arenaScores.filter {entry in
+                        //If Player was already Displayed before, this Score is not the Players highest and there does not need to be Displayed again
                         if seenPlayers.contains(entry.playerName){
                             return false
+                        //If Player was not seen before this Score is the Players highest and there should be Displayed
                         } else {
                             seenPlayers.insert(entry.playerName)
                             return true
@@ -143,7 +130,7 @@ struct ArenaDetails: View {
                 }
             }
         }
-        .padding() // Limit the sheet height
+        .padding() // Limit the Sheet Height
         .presentationDetents([.height(250)])
         .fullScreenCover(isPresented: $showHighscores) {
             HighscoreView(scores: $arenaScores)
