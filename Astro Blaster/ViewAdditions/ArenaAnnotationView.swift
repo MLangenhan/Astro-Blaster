@@ -20,6 +20,7 @@ struct ArenaAnnotationView: View {
             .background(Circle().fill(Color.purple))
             .foregroundColor(.yellow)
             .shadow(radius: 3)
+            // Scale size of Annotation, if player zooms on Map
             .scaleEffect(scale)
     }
 }

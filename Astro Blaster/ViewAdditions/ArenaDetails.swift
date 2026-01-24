@@ -14,7 +14,7 @@ struct ArenaDetails: View {
     
     // The selected Arena
     let place: ArenaPlace
-    // User Location
+    // User Location, Optional if not loaded
     let userLocation: CLLocation?
     // Arena Difficulty
     let difficulty: Int
@@ -22,11 +22,12 @@ struct ArenaDetails: View {
     let onClose: () -> Void
     // New Closure for Full-Screen Navigation
     let onOpenFullScreen: () -> Void
+    // Variable for Database
     @State var arenaScores : [ScoreEntry] = []
     //Show Highscore Panel
     @State private var showHighscores = false
 
-    // Calculate Distance from Player to Arena
+    // Calculate Distance from Player to Arena with coordinates
     private var distanceInMeters: Double? {
         guard let userLocation else { return nil }
 
@@ -59,7 +60,7 @@ struct ArenaDetails: View {
                 .multilineTextAlignment(.center)
 
             Divider()
-                .background(Color.green) // grüne Divider
+                .background(Color.green)
 
             // Buttons
             HStack(spacing: 20) {
@@ -97,7 +98,7 @@ struct ArenaDetails: View {
             Divider()
                 .background(Color.green)
             
-            // Highscore of Arena Button
+            // Highscore for Arena Button
             Button("Highscores of \(place.name)") {
                 showHighscores = true
             }
