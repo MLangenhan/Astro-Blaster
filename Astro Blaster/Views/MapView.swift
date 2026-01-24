@@ -9,7 +9,7 @@ import SwiftUI
 import MapKit
 
 // Arena Places
-// Represents an Arena on the Map with a Name, Description, and Coordinates
+// Represents an Arena on the Map with ID, Name, Description, Difficulty, and Coordinates
 struct ArenaPlace: Identifiable {
     let id: String
     let name: String
@@ -21,37 +21,39 @@ struct ArenaPlace: Identifiable {
 struct MapView: View {
     
     // MARK: - User Location
-    // Include LocationManager and check position
+    // Include LocationManager and init
     @StateObject private var locationManager: LocationManager
     init(locationManager: LocationManager = LocationManager()) {
         _locationManager = StateObject(wrappedValue: locationManager)
     }
     
     // MARK: - State Properties
-    // Currently Selected Place for Showing Details
+    // Currently Selected Arena/Place for Showing Details
     @State private var selectedPlace: ArenaPlace?
     // Trigger Full-Screen Navigation of GameView
     @State private var navigateToGameView = false
-    // Show Profile
+    // Arena Difficulty, default on 10
     @State private var arenaDifficulty = 10
     // Initial Move of Map only Once
     @State private var hasInitialCenterMoved = false
-    // Show Profile
+    // Show Profile variable
     @State private var showProfile = false
-    // Show Settings
+    // Show Settings variable
     @State private var showSettings = false
-    // Track, if User is already Centered on Map
+    // Track, if Map already at users location
     @State private var initialRegionSet = false
+    // ID and name of currently selected Arena
     @State private var pendingArenaId: String? = nil
     @State private var pendingArenaName: String? = nil
 
     
-    // MARK: - Initial Map Camera Position
-    // The Map will Start centered around Aachen
+    // MARK: - Initial Map Camera and User Position
+    // The Map will Start centered around Aachen, if player Location not loaded already
     @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342),
         span: MKCoordinateSpan(latitudeDelta: 0.07, longitudeDelta: 0.07)
     ))
+    // Default User location in Aachen, but get updated as soon as users Real Location is loaded
     @State private var displayedUserCoordinate: CLLocationCoordinate2D =
         CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342) // User Position
     
@@ -60,7 +62,7 @@ struct MapView: View {
     var body: some View {
         
         ZStack{
-            // Map View without Default Points of Interest
+            // Map View without Default Points of Interest and in Dark Mode
             Map(position: $cameraPosition) {
                 
                 ForEach(ArenaPlaces.all) { place in
@@ -72,7 +74,7 @@ struct MapView: View {
                     }
                 }
                 
-                // User Location
+                // User Location on Map
                 Annotation("You", coordinate: displayedUserCoordinate) {
                     UserLocationAnnotationView()
                 }
@@ -83,11 +85,11 @@ struct MapView: View {
                 // User Location Update
                 guard let userLocation = newLocation else { return }
 
-                // User Pin on Real Position
                 withAnimation(.easeInOut(duration: 0.3)) {
                     displayedUserCoordinate = userLocation.coordinate
                 }
-                                
+                
+                // Check if initial Map Reagion already set to User Location
                 guard !initialRegionSet else { return }
 
                 let region = MKCoordinateRegion(
@@ -96,7 +98,7 @@ struct MapView: View {
                 )
 
                 cameraPosition = .region(region)
-                // Dont change it anymore in .onAppear
+                // Dont change location anymore in .onAppear
                 hasInitialCenterMoved = true
                 initialRegionSet = true
             }
@@ -108,9 +110,10 @@ struct MapView: View {
                                ))
             .preferredColorScheme(.dark)
             .onAppear {
+                // This small movement is a bug fix: The Arenas and User Location is only shown, if map was moved a tiny bit. So here we are.
                 // Small Latency, that Map is Loaded
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    // Only once
+                    // Only once the initial Map Movement
                     if !hasInitialCenterMoved {
                         // Create new Position
                         if let initialRegion = cameraPosition.region {
@@ -152,7 +155,6 @@ struct MapView: View {
                         selectedPlace = nil
                         // Arena Difficulty
                         arenaDifficulty = place.difficulty
-                        // Set State for GameView
                         // Present the GameView
                         navigateToGameView = true
                     }
@@ -163,6 +165,7 @@ struct MapView: View {
                 pendingArenaId = nil
                 pendingArenaName = nil
             }) {
+                // Load Game with Arena Details
                 if let id = pendingArenaId, let name = pendingArenaName {
                     GameView(
                         maxDifficulty: 14,
@@ -170,8 +173,6 @@ struct MapView: View {
                         arenaName: name,
                         isPresented: $navigateToGameView
                     )
-                } else {
-                    EmptyView()
                 }
             }
             
@@ -215,19 +216,20 @@ struct MapView: View {
                     CircleIconButton(systemImage: "location.north.fill")
                         .rotationEffect(.degrees(45))
                         .onTapGesture {
+                            // Set Map View to User Location back (User Location in the middle of the screen)
                             guard let userLocation = locationManager.userLocation else { return }
+                                
+                            let region = MKCoordinateRegion(
+                                center: userLocation.coordinate,
+                                span: MKCoordinateSpan(
+                                    latitudeDelta: 0.05,
+                                    longitudeDelta: 0.05
+                                )
+                            )
 
-                                    let region = MKCoordinateRegion(
-                                        center: userLocation.coordinate,
-                                        span: MKCoordinateSpan(
-                                            latitudeDelta: 0.05,
-                                            longitudeDelta: 0.05
-                                        )
-                                    )
-
-                                    withAnimation(.easeInOut(duration: 0.4)) {
-                                        cameraPosition = .region(region)
-                                    }
+                            withAnimation(.easeInOut(duration: 0.4)) {
+                                cameraPosition = .region(region)
+                            }
                             
                         }
 
