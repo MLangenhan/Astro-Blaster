@@ -7,8 +7,10 @@
 
 import Foundation
 
+//Backend Entry Format for each Game played
 struct ScoreEntry: Codable {
-    var _id: String? = nil        // MongoDB ID, may be nil for new submissions
+    // MongoDB ID, may be nil for new Submissions
+    var _id: String? = nil
     let playerName: String
     let arenaId: String
     let arenaName: String

@@ -7,6 +7,7 @@
 
 import Foundation
 
+//Possible Ship Upgrades
 enum UpgradeType: CaseIterable {
     case health
     case rapidFire
@@ -14,6 +15,7 @@ enum UpgradeType: CaseIterable {
     case overdrive
 }
 
+//Physically interactable Objects in Scene
 struct PhysicsCategory {
     static let none: UInt32      = 0
     static let spaceship: UInt32 = 1 << 0

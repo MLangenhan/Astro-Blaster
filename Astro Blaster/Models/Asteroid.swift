@@ -8,15 +8,15 @@
 import Foundation
 import CoreGraphics
 
-// MARK: - Asteroid Model
-
+//Asteroid Models
 struct Asteroid {
+    //Asteroid Stats
     let health: Int
     let speed: CGFloat
     let scale: CGFloat
     let asset: String
 
-    // generate random asteroids based on game state
+    //Generate random Asteroids based on Game State
     static func random(difficulty: CGFloat) -> Asteroid {
         Asteroid(
             health: 1,

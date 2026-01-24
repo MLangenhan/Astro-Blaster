@@ -11,26 +11,28 @@ import AVFoundation
 
 final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
 
-    // MARK: Configuration
+    //Configuration
     private let difficultyTimeConstant: CGFloat = 45.0 // ~2.5 min to reach max difficulty
     var viewModel: GameViewModel?
     
-    // MARK: Audio
+    //Audio
     var backgroundMusic: AVAudioPlayer?
     private var didPlayIntro = false
     
-    // MARK: Assets
+    //Assets
     private let shipNode = SKSpriteNode(imageNamed: "spaceship")
     private var ship = Spaceship() // init model
     private let health1 = SKSpriteNode(imageNamed: "heart")
     private let health2 = SKSpriteNode(imageNamed: "heart")
     private let health3 = SKSpriteNode(imageNamed: "heart")
 
-    // MARK: State
+    //States
     private var upgradeText = ""
     private var dragStartX: CGFloat = 0
-    private var lastFire: TimeInterval = 0 // timestamp from last laser fire
-    private var lastFireDelta: TimeInterval = 0 //Delta from current time to last fire if paused
+    //Timestamp from last Laser Fire
+    private var lastFire: TimeInterval = 0
+    //Delta from current Time to last Fire if paused
+    private var lastFireDelta: TimeInterval = 0
     private var lastUpdateTime: TimeInterval = 0
     private var elapsed: TimeInterval = 0
     private var lastEnemySpawn: TimeInterval = 0
@@ -38,9 +40,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var nextUpgradeDelay: TimeInterval = Double.random(in: 13...16)
     private var shootLeftNext = true
     var soundeffectsEnabled = true
-    // Absolute time when the next upgrade should spawn (scheduled relative to the first update tick)
+    // Absolute Time when the next Upgrade should Spawn (Scheduled relative to the first Update Tick)
     private var nextUpgradeSpawnAt: TimeInterval?
-    // Used for unpausing the game and setting speed back to original speed
+    // Used for Unpausing the Game and Setting Speed back to original Speed
     private var recoverSpeed: CGFloat = 0
     
     // MARK: Active Upgrades
@@ -50,12 +52,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private let minFireRate: TimeInterval = 0.12
     private var preOverdriveFireRate: TimeInterval?
     
-    // timer
+    //Overdrive Timer
     private let overdriveBackground = SKShapeNode(rectOf: CGSize(width: 120, height: 10), cornerRadius: 4)
     private let overdriveFill = SKShapeNode(rectOf: CGSize(width: 116, height: 6), cornerRadius: 3)
     
-    // MARK: Background
-    // spread into 3 since the original pic is 10000px in height and SK only supports up to 4096px
+    // Background
+    //Spread into 3 since the original pic is 10000px in height and SK only supports up to 4096px
     private let background1 = SKSpriteNode(imageNamed: "backgroundTop")
     private let background2 = SKSpriteNode(imageNamed: "backgroundMid")
     private let background3 = SKSpriteNode(imageNamed: "backgroundBottom")
@@ -64,7 +66,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         [background1, background2]
     }
 
-    // MARK: HUD & Score Labels
+    //HUD & Score Labels
     private let hud = SKLabelNode(fontNamed: "ArcadeInterlaced")
     private var scoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
     private var highscoreLabel = SKLabelNode(fontNamed: "ArcadeInterlaced")
@@ -73,11 +75,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Lifecycle
     
-    // gets called when the scene gets created
+    //Gets Called when the Scene gets Created
     override func didMove(to view: SKView) {
-        physicsWorld.contactDelegate = self // for detecting collisions
+        //For Detecting Collisions
+        physicsWorld.contactDelegate = self
         
-        // needs to be done only once
+        //Needs to be done only once
         playBackgroundMusic()
         setupShip()
         setupHUD()
@@ -88,13 +91,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         setupBackground()
     }
     
-    // consistency when scene size changes
+    //Consistency when Scene Size Changes
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         layoutScoreLabels()
     }
 
-    // MARK: Setup functions
+    // MARK: Setup Functions
     private func setupShip() {
         shipNode.setScale(0.066)
         shipNode.zRotation = .pi // asset is the wrong way around
@@ -105,17 +108,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         shipNode.physicsBody?.contactTestBitMask = PhysicsCategory.enemy // im looking for contact with enemies
         shipNode.physicsBody?.collisionBitMask = PhysicsCategory.none // dont care for collisions
 
-        // add to scene
+        //Add to Scene
         addChild(shipNode)
         
-        // create contrail animation
+        //Create Contrail Animation
         let leftEmitter = createContrail(at: -shipNode.size.width * 0.25)
         shipNode.addChild(leftEmitter)
         let rightEmitter = createContrail(at: shipNode.size.width * 0.25)
         shipNode.addChild(rightEmitter)
     }
 
-    // particle shenanigans
+    //Particle for Contrail behind Ship
     func createContrail(at offsetX: CGFloat) -> SKEmitterNode {
         let emitter = SKEmitterNode()
         emitter.particleTexture = SKTexture(imageNamed: "particle") // particle "asset"
@@ -138,7 +141,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         return emitter
     }
     
-    // glow circle around the upgrade
+    //Glow Circle around the Upgrade
     func createUpgradeGlowCircle(radius: CGFloat = 50) -> SKShapeNode {
         let glow = SKShapeNode(circleOfRadius: radius) // circle
         glow.strokeColor = .yellow
@@ -148,7 +151,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         glow.zPosition = -1  // behind the upgrade
         glow.glowWidth = 10
 
-        // Pulsate animation
+        //Pulsate Animation
         let scaleUp = SKAction.scale(to: 1.2, duration: 0.8)
         let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
         let pulse = SKAction.repeatForever(.sequence([scaleUp, scaleDown]))
@@ -157,40 +160,41 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         return glow
     }
     
-    // how fast does the background scroll
+    //How fast does the Background Scroll
     private var backgroundScrollSpeed: CGFloat {
-        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else { return 0 } // only if viemodel is connected and not game over or paused
-        return 40 + difficulty() * 20   // scales with difficulty
+        //Only if Viemodel is connected and Game not over or paused
+        guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else { return 0 }
+        return 40 + difficulty() * 20   //Scales with Difficulty
     }
     
-    // well its scrolls the background
+    //Scrolls the Background
     private func scrollBackground(delta: TimeInterval) {
         let move = backgroundScrollSpeed * CGFloat(delta)
 
-        // Move all backgrounds
+        //Move all Backgrounds
         [background1, background2, background3].forEach {
             $0.position.y -= move
         }
 
-        // Recycle only looping backgrounds
+        //Recycle only Looping Backgrounds
         for bg in loopingBackgrounds {
 
-            // Fully below the screen?
+            //Fully below the Screen
             if bg.position.y + bg.size.height / 2 < -size.height / 2 {
 
-                // Find the current top-most looping background
+                //Find the current top-most looping Background
                 let topMostY = loopingBackgrounds
                     .map { $0.position.y + $0.size.height / 2 }
                     .max() ?? 0
 
-                // Place this background above it
+                //Place this Background above the last
                 bg.position.y = topMostY + bg.size.height / 2
             }
         }
     }
     
     private func setupBackground() {
-        // move to background
+        //Move to Background
         background1.zPosition = -200
         background2.zPosition = -200
         background3.zPosition = -200
@@ -202,7 +206,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         layoutBackground()
     }
 
-    // debugging
+    //Used for Displaying Scores
     private func setupHUD() {
         hud.fontSize = 12
         hud.horizontalAlignmentMode = .left
@@ -230,6 +234,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         layoutScoreLabels()
     }
     
+    //Used for Displaying remaining Player Health
     private func setupHearts() {
         hearts = [health1, health2, health3]
         for heart in hearts {
@@ -241,7 +246,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         layoutHearts()
     }
 
-    // UI Timer for non-persistent upgrade
+    // UI Timer for non-persistent Upgrade
     private func setupOverdriveUI() {
         overdriveBackground.fillColor = .white
         overdriveBackground.strokeColor = .clear
@@ -249,19 +254,20 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         overdriveBackground.isHidden = true
         overdriveFill.fillColor = .green
         overdriveFill.strokeColor = .clear
-        overdriveFill.zPosition = 301 // foremostground (is that even a word?)
+        //Foreground
+        overdriveFill.zPosition = 301
         overdriveBackground.addChild(overdriveFill)
         addChild(overdriveBackground)
     }
 
-    // score and highscore
+    //Score and Highscore
     private func layoutScoreLabels() {
         scoreLabel.position = CGPoint(x: size.width / 8 - 200, y: size.height / 2 - 70)
         highscoreLabel.position = CGPoint(x: scoreLabel.position.x, y: scoreLabel.position.y - 20)
     }
     
     private func layoutHearts() {
-        // Position relative to score label
+        //Position relative to Score Label
         let startX = scoreLabel.position.x + health1.size.width / 2
         let y = scoreLabel.position.y - 40
         for (i, heart) in hearts.enumerated() {
@@ -270,12 +276,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     private func layoutBackground() {
-        // different sizes since we had to crop it and im no surgeon
+        //Different Sizes since they needed to be Cropped in Order to be used as SpriteKitNode
         let h1 = background1.size.height
         let h2 = background2.size.height
         let h3 = background3.size.height
         
-        // Place bottom image so it is visible at boot
+        //Place bottom Image so it is visible at Boot
         background3.position = CGPoint(
             x: 0,
             y: -size.height / 2 + h3 / 2 // since anchor point is in the middle
@@ -295,65 +301,71 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Game Scale
     
-    // game scaling difficulty over time
+    //Game Scaling Difficulty over Time
     private func difficulty() -> CGFloat {
         let t = CGFloat(elapsed)
-        let maxDifficulty = viewModel?.maxDifficulty ?? 5.0 // passed by viewmodel
-        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant)) // plateaus at maxDifficulty
-        return min(value, maxDifficulty) // only up to maxDifficulty
+        //Passed by Viewmodel
+        let maxDifficulty = viewModel?.maxDifficulty ?? 5.0
+        //Plateaus at maxDifficulty
+        let value = maxDifficulty * (1 - exp(-t / difficultyTimeConstant))
+        //Only up to maxDifficulty
+        return min(value, maxDifficulty)
     }
 
     // MARK: - Update
     
-    // gets called once per frame
+    //Gets called once per Frame
     override func update(_ currentTime: TimeInterval) {
         guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else {
             lastUpdateTime = currentTime
             lastFire = currentTime - lastFireDelta
             return
-        } // check for viewmodel and if not game over or paused
+        } //Check for Viewmodel and if not Game over or paused
         
-        let delta = computeDeltaTime(currentTime: currentTime) // account for different frame rates
-        elapsed += delta // counts elapsed time to keep track of how long its been played
+        //Account for different Frame Rates
+        let delta = computeDeltaTime(currentTime: currentTime)
+        //Counts elapsed Time to Keep track of how long its been Played
+        elapsed += delta
 
-        // Schedule the first upgrade spawn relative to the first scene tick to avoid immediate spawn due to large absolute currentTime
+        // Schedule the first Upgrade Spawn relative to the first Scene Tick to Avoid immediate Spawn due to large absolute currentTime
         if nextUpgradeSpawnAt == nil {
             nextUpgradeSpawnAt = currentTime + Double.random(in: 13...16)
         }
 
-        vm.updateScore(points: 1) // Passive score over time
+        // Passive Score over Time
+        vm.updateScore(points: 1)
         scoreLabel.text = "Score: \(vm.scoreValue)"
         highscoreLabel.text = "High: \(vm.highscore)"
 
-        // updating the game state
+        //Updating the Game State
         fireLasers(currentTime)
         spawnEnemies(currentTime)
         
-        // Spawn an upgrade only when the absolute clock reaches the scheduled time
+        // Spawn an Upgrade only when the absolute Clock Reaches the scheduled Time
         if let scheduled = nextUpgradeSpawnAt, currentTime >= scheduled {
             spawnUpgrades(currentTime)
-            // Reschedule the next upgrade spawn relative to the current time
+            //Reschedule the next Upgrade Spawn relative to the current Time
             nextUpgradeSpawnAt = currentTime + Double.random(in: 13...16)
         }
         
         moveEnemies(delta: delta)
         moveUpgrades(delta: delta)
-        updateHUD()
         updateHealth()
         printUpgradesToScreen()
-        updateOverdrive(delta: delta) // non-persistent upgrade
+        //Non-persistent Upgrade
+        updateOverdrive(delta: delta)
         layoutOverdriveUI()
         scrollBackground(delta: delta)
     }
 
-    // account for different framerates
+    //Account for different Frame Rates
     private func computeDeltaTime(currentTime: TimeInterval) -> TimeInterval {
         let delta = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 1.0 / 60.0 // since lastUpdateTime is initialized with zero, we need to update it at least once with a default fps value since the delta would otherwise be negativew which adds too many difficulties
         lastUpdateTime = currentTime // for next comparison
         return delta
     }
     
-    // toggles visibility of hearts based on ships health
+    //Toggles Visibility of Hearts based on Ships Health
     private func updateHealth() {
         for (index, heart) in hearts.enumerated() {
             heart.isHidden = index >= ship.health
@@ -363,85 +375,106 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: Lasers
     private func fireLasers(_ time: TimeInterval) {
         lastFireDelta = time - lastFire
-        guard time - lastFire >= ship.fireRate else { return } // only fire after "fireRate" amount of time has passed
+        //Only Fire after "fireRate" amount of Time has Passed
+        guard time - lastFire >= ship.fireRate else { return }
         lastFire = time
 
-        // if dualshot upgrade is unlocked shoot both lasers at the same time
+        //If dualshot Upgrade is unlocked Shoot both Lasers at the same Time
         if ship.hasDualShot {
             spawnLaser(asset: "BlasterschussLinks", xOffset: -12)
             spawnLaser(asset: "BlasterschussRechts", xOffset: 12)
         } else {
-            let asset = shootLeftNext ? "BlasterschussLinks" : "BlasterschussRechts" // alternating fire based on shootLeftNext flag
+            //Alternating fire based on shootLeftNext Flag
+            let asset = shootLeftNext ? "BlasterschussLinks" : "BlasterschussRechts"
             spawnLaser(asset: asset, xOffset: shootLeftNext ? -30 : 30)
             shootLeftNext.toggle()
         }
-        playSFX("laser.wav", volume: 0.2) // laser sound effect
+        //Laser Sound Effect
+        playSFX("laser.wav", volume: 0.2)
     }
 
-    // the laser logic (that sounds fire)
+    //The Laser Logic
     private func spawnLaser(asset: String, xOffset: CGFloat) {
         let laser = SKSpriteNode(imageNamed: asset)
         laser.setScale(0.03)
-        laser.position = CGPoint(x: shipNode.position.x + xOffset, y: shipNode.position.y + shipNode.size.height / 2) // place based on xOffset
-        laser.physicsBody = SKPhysicsBody(rectangleOf: laser.size) // laser is rectangle anyways
-        laser.physicsBody?.velocity = CGVector(dx: 0, dy: 900) // how fast
-        laser.physicsBody?.affectedByGravity = false // lasers dont fall
-        laser.physicsBody?.categoryBitMask = PhysicsCategory.laser // im a laser
-        laser.physicsBody?.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.upgrade // looking for contact with enemies or upgrades
-        laser.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting on collisions
+        //Place based on xOffset
+        laser.position = CGPoint(x: shipNode.position.x + xOffset, y: shipNode.position.y + shipNode.size.height / 2)
+        //Laser is Rectangle anyways
+        laser.physicsBody = SKPhysicsBody(rectangleOf: laser.size)
+        //Laser Velocity
+        laser.physicsBody?.velocity = CGVector(dx: 0, dy: 900)
+        //Lasers is not affected by Gravity, so it does not Fall down
+        laser.physicsBody?.affectedByGravity = false
+        laser.physicsBody?.categoryBitMask = PhysicsCategory.laser
+        //Looking for Contact with Enemies or Upgrades
+        laser.physicsBody?.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.upgrade
+        //Not Reacting on Collisions
+        laser.physicsBody?.collisionBitMask = PhysicsCategory.none
         addChild(laser)
-        laser.run(.sequence([.wait(forDuration: 2.0), .removeFromParent()])) // remove laser from canvas after 2 seconds (off-screen by then) to prevent memory leaks
+        //Remove Laser from Canvas after 2 Seconds (Off-Screen by then) to prevent Memory Leaks
+        laser.run(.sequence([.wait(forDuration: 2.0), .removeFromParent()]))
     }
 
     // MARK: Enemies
     private func spawnEnemies(_ time: TimeInterval) {
-        guard time - lastEnemySpawn > 1.0 else { return } // spawn enemies once a second TODO: spawn enemies in random intervals
+        //Spawn Enemies once a Second
+        guard time - lastEnemySpawn > 1.0 else { return }
         lastEnemySpawn = time
 
-        let asteroid = Asteroid.random(difficulty: difficulty()) // choose a random asteroid
+        //Choose a random Asteroid
+        let asteroid = Asteroid.random(difficulty: difficulty())
         let node = SKSpriteNode(imageNamed: asteroid.asset)
         node.name = "enemy"
         node.setScale(asteroid.scale)
         
-        // different dimensions since we have different asteroids
+        //Different Dimensions since we have Different Asteroids
         let half = node.size.width / 2
         let minX = -size.width / 2 + half
         let maxX = size.width / 2 - half
         
-        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height) // spawn at top of screen with 15px right and left to not spawn it partially off-screen
-        node.userData = ["hp": asteroid.health, "speed": asteroid.speed] // asteroid stats
-        node.physicsBody = SKPhysicsBody(circleOfRadius: half) // radial body since the assets are round-ish
-        node.physicsBody?.affectedByGravity = false // were in space (im some sort of a scientist myself)
-        node.physicsBody?.categoryBitMask = PhysicsCategory.enemy // im an enemy
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser | PhysicsCategory.spaceship // looking for contact with laser or spaceship
-        node.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting on collisions
+        //Spawn at top of Screen with 15px right and left to not Spawn it partially Off-Screen
+        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height)
+        //Asteroid Stats
+        node.userData = ["hp": asteroid.health, "speed": asteroid.speed]
+        //Radial Body since the Assets are round-ish
+        node.physicsBody = SKPhysicsBody(circleOfRadius: half)
+        //Not affected by Gravity
+        node.physicsBody?.affectedByGravity = false
+        node.physicsBody?.categoryBitMask = PhysicsCategory.enemy
+        //Looking for Contact with Laser or Spaceship
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser | PhysicsCategory.spaceship
+        //Not Reacting on Collisions
+        node.physicsBody?.collisionBitMask = PhysicsCategory.none
         addChild(node)
 
-        // falling animation
+        //Falling Animation
         let direction: CGFloat = Bool.random() ? 1 : -1
         let rotations = CGFloat.random(in: 0.5...1.0)
         let fallDuration = size.height / asteroid.speed
         node.run(.rotate(byAngle: direction * rotations * .pi * 2, duration: TimeInterval(fallDuration)))
     }
 
-    // to make it look like the ship flies towards them
+    //To Make it Look like the Ship Flies towards them
     private func moveEnemies(delta: TimeInterval) {
-        // get all SpriteKit children with name "enemy"
+        //Get all SpriteKit Children with Name "enemy"
         enumerateChildNodes(withName: "enemy") { node, _ in
             if let speed = node.userData?["speed"] as? CGFloat {
-                node.position.y -= speed * CGFloat(delta) // fall down
+                //Fall down
+                node.position.y -= speed * CGFloat(delta)
             }
-            // if asteroid slips through, take damage
+            //If Asteroid Slips through, Take Damage
             if node.position.y + node.frame.height / 2 < -self.size.height / 2 {
                 self.ship.health -= 1
-                node.removeFromParent() // prevent memory leaks
-                if self.ship.health <= 0 { self.gameOver() } // game over
+                //Prevent Memory Leaks
+                node.removeFromParent()
+                //Game over
+                if self.ship.health <= 0 { self.gameOver() }
             }
         }
     }
 
     // MARK: Upgrades
-    // probability distribution of the upgrades
+    //Probability Distribution of the Upgrades
     private let upgradeWeights: [(type: UpgradeType, weight: Double)] = [
         (.rapidFire, 0.55), (.overdrive, 0.3), (.health, 0.10), (.dualShot, 0.05)
     ]
@@ -449,15 +482,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private func chooseRandomUpgrade() -> UpgradeType {
         let roll = Double.random(in: 0...1)
         var cumulative = 0.0
-        // store weights for dynamic filtering
+        //Store Weights for dynamic Filtering
         var filteredUpgrades = upgradeWeights
         
-        // dont get dual shot twice since its a persistent upgrade
+        //Dont Get dualshot twice since its a persistent Upgrade
         if ship.hasDualShot {
             filteredUpgrades.removeLast()
         }
         
-        // for simplicity with the design
+        //For Simplicity with the Design
         if ship.health == 3 {
             filteredUpgrades.remove(at: 2)
         }
@@ -467,25 +500,32 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             cumulative += entry.weight
             if roll <= cumulative { return entry.type }
         }
-        return .rapidFire // default if something fails
+        //Default if something Fails
+        return .rapidFire
     }
     
     func spawnUpgrades(_ time: TimeInterval) {
-        // Timing for upgrade spawns is managed in update
+        // Timing for Upgrade Spawns is Managed in Update
         
         let type = chooseRandomUpgrade()
         let node = SKSpriteNode(imageNamed: "spacestation")
         node.size = CGSize(width: 80, height: 80)
         node.name = "upgrade"
-        node.userData = ["type": type, "speed": CGFloat(80)] // upgrade stats
-        node.position = CGPoint(x: 0, y: size.height / 2 + node.size.height) // spawn at the top
-        node.physicsBody = SKPhysicsBody(rectangleOf: node.size) // hitbox
-        node.physicsBody?.affectedByGravity = false // same as enemies
-        node.physicsBody?.categoryBitMask = PhysicsCategory.upgrade // im an upgrade
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser // looking for contact with laser
-        node.physicsBody?.collisionBitMask = PhysicsCategory.none // not reacting to collisions
+        //Upgrade Stats
+        node.userData = ["type": type, "speed": CGFloat(80)]
+        //Spawn at the top
+        node.position = CGPoint(x: 0, y: size.height / 2 + node.size.height)
+        // Hitbox
+        node.physicsBody = SKPhysicsBody(rectangleOf: node.size)
+        //Same as Enemies
+        node.physicsBody?.affectedByGravity = false
+        node.physicsBody?.categoryBitMask = PhysicsCategory.upgrade
+        //Looking for Contact with Laser
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.laser
+        //Not Reacting to Collisions
+        node.physicsBody?.collisionBitMask = PhysicsCategory.none
         
-        // Add the glowing circle
+        // Add the glowing Circle to Upgrades
         let glow = createUpgradeGlowCircle(radius: 40)
         node.addChild(glow)
         
@@ -493,21 +533,23 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     private func printUpgradesToScreen() {
-        hudLines.forEach { $0.removeFromParent() } // clear previous message
+        //Clear previous Message
+        hudLines.forEach { $0.removeFromParent() }
         hudLines.removeAll()
-        let line = SKLabelNode(fontNamed: "ArcadeInterlaced") // custom font
+        let line = SKLabelNode(fontNamed: "ArcadeInterlaced")
         line.text = upgradeText
         line.fontColor = .green
         line.fontSize = 12
         line.horizontalAlignmentMode = .center
         line.position.x = 0
         line.position.y = -(frame.height/4 + 25)
-        line.zPosition = 100 // foreground
+        line.zPosition = 100
         addChild(line)
-        hudLines.append(line) // append message
+        //Append Message
+        hudLines.append(line)
     }
 
-    // same as move enemies
+    //Same as move Enemies
     private func moveUpgrades(delta: TimeInterval) {
         enumerateChildNodes(withName: "upgrade") { node, _ in
             if let speed = node.userData?["speed"] as? CGFloat {
@@ -518,41 +560,62 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
 
     // MARK: Collisions
-    // this gets called when contact happens between 2 parties, e.g. laser and enemy
-    func didBegin(_ contact: SKPhysicsContact) { // contact stores both parties
-        // which parties caused the contact
+    //This Cets Called when Contact Happens between 2 Parties, e.g. Laser and Enemy
+    //Contact Stores both Parties
+    func didBegin(_ contact: SKPhysicsContact) {
+        //Which Parties caused the Contact
         guard let a = contact.bodyA.node, let b = contact.bodyB.node else { return }
-        let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil // is one of them an enemy
-        let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil // is one of them an upgrade
-        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : contact.bodyB.categoryBitMask == PhysicsCategory.laser ? b : nil // lasers dont have a name, thats why we check by category
-        let spaceship = contact.bodyA.categoryBitMask == PhysicsCategory.spaceship ? a : contact.bodyB.categoryBitMask == PhysicsCategory.spaceship ? b : nil // spaceship does not have a name, so we check for category
-
-        if let enemy = enemy { // if theres an enemy involved
-            if let spaceship = spaceship { // and a spaceship
-                ship.health -= 1 // take damage
-                flashWhite(spaceship) // damage animation
-                playSFX("damage.wav", volume: 0.4) // damage sound effect
-                enemy.removeFromParent() // prevent memory leaks
-                if ship.health <= 0 { self.gameOver() } // check for game over
+        //Is one of them an Enemy
+        let enemy = a.name == "enemy" ? a : b.name == "enemy" ? b : nil
+        //Is one of them an Upgrade
+        let upgrade = a.name == "upgrade" ? a : b.name == "upgrade" ? b : nil
+        //Lasers Dont Have a Name, thats why we Check by Category
+        let laser = contact.bodyA.categoryBitMask == PhysicsCategory.laser ? a : contact.bodyB.categoryBitMask == PhysicsCategory.laser ? b : nil
+        //Spaceship Does not Have a Name, so we Check for Category
+        let spaceship = contact.bodyA.categoryBitMask == PhysicsCategory.spaceship ? a : contact.bodyB.categoryBitMask == PhysicsCategory.spaceship ? b : nil
+        //If theres an Enemy Involved
+        if let enemy = enemy {
+            //And a Spaceship
+            if let spaceship = spaceship {
+                //Take Damage
+                ship.health -= 1
+                //Damage Animation
+                flashWhite(spaceship)
+                //Damage Sound Effect
+                playSFX("damage.wav", volume: 0.4)
+                //Prevent Memory Leaks
+                enemy.removeFromParent()
+                //Check for Game over
+                if ship.health <= 0 { self.gameOver() }
                 return
             }
-            playSFX("hit\(Int.random(in: 1...3)).wav", volume: 0.3) // since enemy only checks for contact with either spaceship or asteroid, if it isnt the spaceship it must be an asteroid, so we play one of three hit sound effects
-            flashWhite(enemy) // damage animation
-            if let hp = enemy.userData?["hp"] as? Int, hp > 1 { // deprecated, asteroids could have more hp but we opted more towards speedier asteroids instead for increased difficulty. Still nice to have for the future
+            //Since Enemy only Checks for Contact with either Spaceship or Asteroid, if it isnt the Spaceship it must be an Asteroid, so we Play one of three Hit Sound Effects
+            playSFX("hit\(Int.random(in: 1...3)).wav", volume: 0.3)
+            //Damage Animation
+            flashWhite(enemy)
+            // Deprecated, Asteroids could Have more HP, but we Opted more towards speedier Asteroids instead for increased Difficulty. Still nice to Have for the Future
+            if let hp = enemy.userData?["hp"] as? Int, hp > 1 {
                 enemy.userData?["hp"] = hp - 1
             } else {
-                enemy.removeFromParent() // prevent memory leaks and destroy asteroid
-                viewModel?.updateScore(points: 10) // give credit
+                //Prevent Memory Leaks and Destroy Asteroid
+                enemy.removeFromParent()
+                //Give Score
+                viewModel?.updateScore(points: 10)
             }
         }
 
-        if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType { // if an upgrade is involved
-            if type == .overdrive { // if its the non-persistent one
-                upgradeText = "Overdrive Active" // display the text
+        //If an Upgrade is Involved
+        if let upgrade = upgrade, let type = upgrade.userData?["type"] as? UpgradeType {
+            // if its the non-persistent one
+            if type == .overdrive {
+                //Override upgradeText
+                upgradeText = "Overdrive Active"
                 removeUpgradeText()
-                activateOverdrive() // activate the upgrade
+                //Activate the Upgrade
+                activateOverdrive()
             } else {
-                ship.apply(type) // normal upgrade
+                //Normal Upgrade
+                ship.apply(type)
                 if type == .rapidFire {
                     upgradeText = "Firerate Increased"
                 } else {
@@ -560,95 +623,81 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
                 }
                 removeUpgradeText()
             }
-            upgrade.removeFromParent() // destroy upgrade
-            viewModel?.updateScore(points: 100) // give credit
+            //Destroy Upgrade
+            upgrade.removeFromParent()
+            //Give Score
+            viewModel?.updateScore(points: 100)
         }
-        
-        if let laser = laser { laser.removeFromParent() } // prevent memory leaks
+        //Prevent Memory Leaks
+        if let laser = laser { laser.removeFromParent() }
     }
     
     private func removeUpgradeText() {
+        //Clear upGradeText after 2 Seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.upgradeText = "" // clear variable after short time for future uses
+            self.upgradeText = ""
         }
     }
 
-    // activate non-persistent upgradae
+    //Activate non-persistent Upgrade
     private func activateOverdrive() {
-        if overdriveRemaining > 0 { // only until it runs out
-            overdriveRemaining += overdriveBonusDuration // increase time every time you get it
+        //If the Upgrade Runs out of Time
+        if overdriveRemaining > 0 {
+            //Increase Duration every Time Upgrade is Collected
+            overdriveRemaining += overdriveBonusDuration
         } else {
-            preOverdriveFireRate = ship.fireRate // save for later restoration
-            overdriveRemaining = overdriveBaseDuration // first time gets base duration
-            ship.fireRate = minFireRate // as fast as it gets
+            //Save current Firerate to Get back to later
+            preOverdriveFireRate = ship.fireRate
+            //First Time Duration is Base Duration
+            overdriveRemaining = overdriveBaseDuration
+            //As fast as it Gets
+            ship.fireRate = minFireRate
         }
-        overdriveBackground.isHidden = false // show timer overlay
+        //Show overdrive Timer Overlay
+        overdriveBackground.isHidden = false
     }
 
-    // non-persistent upgrade lifecycle
+    //Non-persistent Upgrade Lifecycle
     private func updateOverdrive(delta: TimeInterval) {
-        guard overdriveRemaining > 0 else { return } // check timer
-        overdriveRemaining -= delta // subtract passed time
-        let progress = max(0, overdriveRemaining) / overdriveBaseDuration // percentage for timer ui
+        //Check Timer
+        guard overdriveRemaining > 0 else { return }
+        //Substract passed Time
+        overdriveRemaining -= delta
+        //Percentage for Timer UI
+        let progress = max(0, overdriveRemaining) / overdriveBaseDuration
         overdriveFill.xScale = CGFloat(progress)
         if overdriveRemaining <= 0 {
             overdriveRemaining = 0
-            overdriveBackground.isHidden = true // hide overlay when timer is done
-            if let previous = preOverdriveFireRate { // restore firerate
+            //Hide Overlay if Timer is 0
+            overdriveBackground.isHidden = true
+            //Restore Firerate to previously saved Number
+            if let previous = preOverdriveFireRate {
                 ship.fireRate = previous
                 preOverdriveFireRate = nil
             }
         }
     }
 
-    // damage animation
+    //Damage Animation
     private func flashWhite(_ node: SKNode) {
         node.run(.sequence([
-            .colorize(with: .white, colorBlendFactor: 1, duration: 0.05), // short white pulse
+            //Short white Pulse
+            .colorize(with: .white, colorBlendFactor: 1, duration: 0.05),
             .colorize(withColorBlendFactor: 0, duration: 0.05)
         ]))
     }
-
-    // deprecated, here for eventualities
-    private func updateHUD() {
-        hudLines.forEach { $0.removeFromParent() }
-        hudLines.removeAll()
-        //let enemyCount = children.filter { $0.name == "enemy" }.count
-        //let laserCount = children.filter { $0.physicsBody?.categoryBitMask == PhysicsCategory.laser }.count
-        //let overdriveText = (overdriveRemaining > 0) ? "Overdrive Active" : "";
-        let texts = [
-            /*
-            "Enemies: \(enemyCount)", "Lasers: \(laserCount)",
-            "Difficulty: \(String(format: "%.2f", difficulty()))", "",
-            "Ship Stats:", "Health: \(ship.health)",
-            "Fire Rate: \(String(format: "%.2f", ship.fireRate)) s", "Dual Shot: \(ship.hasDualShot)",
-             */
-            ""
-        ]
-        //DO NOT REMOVE THE I; TO MAKE DEVSTATS VISIBLE WHEN NEEDED!!!
-        for (i, text) in texts.enumerated() {
-            let line = SKLabelNode(fontNamed: "ArcadeInterlaced")
-            line.text = text
-            line.fontColor = .green
-            line.fontSize = 12
-            line.horizontalAlignmentMode = .center
-            line.position = CGPoint(x: 0, y: -10 - 12 * CGFloat(i))
-            line.zPosition = 100
-            addChild(line)
-            hudLines.append(line)
-        }
-    }
-
-    // non-persistent upgrade timer
+    
+    //Non-persistent Upgrade Timer
     private func layoutOverdriveUI() {
         overdriveBackground.position = CGPoint(x: frame.midX, y: frame.height - frame.height * 1.3)
     }
     
     // MARK: - Play Audio
     private func playBackgroundMusic() {
-        guard !didPlayIntro else { return } // for looping we split the music in two parts, the intro and the looping part
+        //Split Background Music into Intro and Looping Part so that the Intro is not Played twice
+        guard !didPlayIntro else { return }
 
-        // get the intro
+        //Get the Intro
         guard let url = Bundle.main.url(
             forResource: "backgroundMusicStart",
             withExtension: "wav"
@@ -657,21 +706,22 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             return
         }
         
-        // play the music once
+        //Play Music once
         do {
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
-            backgroundMusic?.delegate = self // append delegate
+            backgroundMusic?.delegate = self
             backgroundMusic?.numberOfLoops = 0
             backgroundMusic?.volume = 0.5
             backgroundMusic?.prepareToPlay()
             backgroundMusic?.play()
-            didPlayIntro = true // intro played
+            //Intro Played
+            didPlayIntro = true
         } catch {
             print("Failed to play intro music")
         }
     }
     
-    // play the looping part of the music
+    //Play the looping Part of the Music
     private func playLoopingMusic() {
         guard let url = Bundle.main.url(
             forResource: "backgroundMusicLoop",
@@ -683,7 +733,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
         do {
             backgroundMusic = try AVAudioPlayer(contentsOf: url)
-            backgroundMusic?.numberOfLoops = -1 // loop infinetly
+            //Loop indefinetely
+            backgroundMusic?.numberOfLoops = -1
             backgroundMusic?.prepareToPlay()
             backgroundMusic?.play()
         } catch {
@@ -691,7 +742,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         }
     }
     
-    // delegate callback that gets called when the audio player finished playing -> causes looping
+    //Delegate Callback that Gets Called when the Audio Player finished Playing -> Causes looping
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         playLoopingMusic()
     }
@@ -699,7 +750,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     // MARK: Sound Effects
     private func playSFX(_ file: String, volume: Float = 1.0) {
         if soundeffectsEnabled {
-            // Using SKAction.playSoundFileNamed for short, one-shot sound effects since audio adds a lot of overhead for many short sounds
+            //Using SKAction.playSoundFileNamed for short, one-shot Sound Effects since Audio adds a lot of Overhead for many short Sounds
             let playAction = SKAction.playSoundFileNamed(file, waitForCompletion: false)
             run(playAction)
         }
@@ -710,15 +761,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         ship.health = 0
         viewModel?.setGameOver()
         backgroundMusic?.stop()
-        playSFX("gameover.mp3", volume: backgroundMusic!.volume) // game over sound effect
-        physicsWorld.speed = 0 // stop the game
+        //Game over Sound Effect
+        playSFX("gameover.mp3", volume: backgroundMusic!.volume)
+        //Stop Game
+        physicsWorld.speed = 0
         
-        // Submit score asynchronously
+        // Submit Score asynchronously
         Task {
             await submitScore()
         }
     }
     
+    //Submit final Score of Player to the Backend
     private func submitScore() async {
         guard let vm = viewModel else { return }
 
@@ -742,6 +796,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     //MARK: Game Paused
     func gamePause() {
+        //Stop everything, but Needs to be able to continue later and Set Flags
         recoverSpeed = physicsWorld.speed
         viewModel?.setGamePause()
         physicsWorld.speed = 0
@@ -749,6 +804,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     }
     
     func gameUnpause() {
+        //Continue everything, which stopped before and Set Flags
         viewModel?.setGameUnpause()
         physicsWorld.speed = recoverSpeed
         backgroundMusic?.play()
@@ -756,16 +812,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
 
     // MARK: Input
     func beginDrag() {
-        dragStartX = shipNode.position.x // only move on the x axis
+        //Only move on the x Axis
+        dragStartX = shipNode.position.x
     }
     
     func dragShip(by deltaX: CGFloat) {
         let proposedX = dragStartX + deltaX
         let half = shipNode.size.width / 2
-        shipNode.position.x = min(max(proposedX, -size.width / 2 + half), size.width / 2 - half) // avoid clamping
+        //Avoid Clamping
+        shipNode.position.x = min(max(proposedX, -size.width / 2 + half), size.width / 2 - half)
     }
 
-    // when restarting the game, set everything back to the initial values
+    //When Restarting the Game, Set everything back to the initial Values
     func reset() {
         ship = Spaceship()
         elapsed = 0
@@ -774,7 +832,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         lastEnemySpawn = 0
         lastUpgradeDrop = 0
         nextUpgradeDelay = Double.random(in: 13...16)
-        // Clear absolute upgrade spawn schedule; it will be re-initialized on first update tick
+        //Clear absolute Upgrade Spawn Schedule; will be re-initialized on first Update Tick
         nextUpgradeSpawnAt = nil
         shootLeftNext = true
         overdriveRemaining = 0

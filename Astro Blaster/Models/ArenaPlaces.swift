@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 
+//All Arenas in Game
 struct ArenaPlaces {
 
     static let all: [ArenaPlace] = [

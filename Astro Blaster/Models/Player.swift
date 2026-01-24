@@ -10,26 +10,27 @@ import Foundation
 struct Player {
     var name: String
     
-    // shared singleton for access across the whole app
+    //Shared Singleton for Access across the whole App
     static var shared = Player.load()
     
-    // MARK: - Load or create a player
+    //Load or Create a Player
     private static func load() -> Player {
         if let savedName = UserDefaults.standard.string(forKey: "playerName") { // persistent name
             return Player(name: savedName)
         } else {
-            let randomName = generateRandomName() // if no name has been specified, generate a random one since we need one for linking the score to the player
+            //If no Name has been specified, Generate a random one since we need one for Linking the Score to the Player
+            let randomName = generateRandomName()
             UserDefaults.standard.set(randomName, forKey: "playerName")
             return Player(name: randomName)
         }
     }
     
-    // MARK: - Save changes
+    //Save Name Change
     func save() {
         UserDefaults.standard.set(name, forKey: "playerName")
     }
     
-    // MARK: - Random funny name generator
+    //Random Name generator
     private static func generateRandomName() -> String {
         let adjectives = ["Crazy", "Sneaky", "Flying", "Turbo", "Mega", "Astro", "Pixel", "Cosmic"]
         let nouns = ["Blaster", "Laser", "Rocket", "Alien", "Star", "Meteor", "Photon", "Plasma"]

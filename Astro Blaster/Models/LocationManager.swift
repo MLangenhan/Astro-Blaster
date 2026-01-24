@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 import Combine
 
-// MARK: Location Settings
+//Location Settings
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     private let manager = CLLocationManager()

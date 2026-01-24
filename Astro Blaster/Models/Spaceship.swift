@@ -10,11 +10,13 @@ import Foundation
 // MARK: - Spaceship Model
 
 struct Spaceship {
-    var fireRate: TimeInterval = 0.8 // in seconds
+    //Stats of Spaceship
+    //In Seconds
+    var fireRate: TimeInterval = 0.8
     var health: Int = 3
     var hasDualShot: Bool = false
 
-    // update stats according to collected upgrade
+    //Update Stats according to collected Upgrade
     mutating func apply(_ upgrade: UpgradeType) {
         switch upgrade {
         case .health:
