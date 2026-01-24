@@ -57,6 +57,31 @@ struct MapView: View {
     @State private var displayedUserCoordinate: CLLocationCoordinate2D =
         CLLocationCoordinate2D(latitude: 40.77664, longitude: 6.08342) // User Position
     
+    // Variable for Zoom calculation (Arena Icons size)
+    @State private var currentRegion: MKCoordinateRegion?
+
+    // Calculation for Arena Annotations size
+    private var zoomScale: CGFloat {
+        guard let region = currentRegion else { return 1 }
+
+        let delta = max(region.span.latitudeDelta,
+                        region.span.longitudeDelta)
+
+        let baseDelta: CLLocationDegrees = 0.07
+        let minScale: CGFloat = 0.25
+
+        if delta <= baseDelta {
+            return 1.0
+        }
+
+        let factor = baseDelta / delta
+        let scale = pow(factor, 0.85)
+
+        return max(scale, minScale)
+    }
+
+
+
     
     // MARK: - Body
     var body: some View {
@@ -67,18 +92,25 @@ struct MapView: View {
                 
                 ForEach(ArenaPlaces.all) { place in
                     Annotation(place.name, coordinate: place.coordinate) {
-                        ArenaAnnotationView(place: place)
-                            .onTapGesture {
-                                selectedPlace = place
-                            }
+                        ArenaAnnotationView(
+                            place: place,
+                            scale: zoomScale
+                        )
+                        .onTapGesture {
+                            selectedPlace = place
+                        }
                     }
                 }
-                
+
                 // User Location on Map
                 Annotation("You", coordinate: displayedUserCoordinate) {
                     UserLocationAnnotationView()
                 }
                 
+            }
+            // Save context.region for zoom, that Arena Icons get smaller
+            .onMapCameraChange { context in
+                currentRegion = context.region
             }
             .onChange(of: locationManager.userLocation) { _, newLocation in
                 
