@@ -36,7 +36,7 @@ struct ArenaAnnotationView: View {
             .frame(width: 28, height: 28)
             .padding(6)
             // If Player near Arena an can play it, then make it red. Else make it purple.
-            .background(Circle().fill(isNearby ? Color.red : Color.purple))
+            .background(Circle().fill(isNearby ? Color.green : Color.purple))
             .foregroundColor(.yellow)
             .shadow(radius: 3)
             // Scale size of Annotation, if player zooms on Map
