@@ -14,6 +14,16 @@ struct ArenaPlaces {
     static let all: [ArenaPlace] = [
         // Germany - Aachen
         ArenaPlace(
+            id: "end-game",
+            name: "End Game",
+            description: "Fight at End Game.",
+            difficulty: 10,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.788902,
+                longitude: 6.057804
+            )
+        ),
+        ArenaPlace(
             id: "dom-aachen",
             name: "Dom Aachen",
             description: "Fight at Dom Aachen.",
@@ -21,6 +31,16 @@ struct ArenaPlaces {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77535,
                 longitude: 6.08389
+            )
+        ),
+        ArenaPlace(
+            id: "aquis-plaza-aachen",
+            name: "Aquis Plaza",
+            description: "Fight at Aquis Plaza.",
+            difficulty: 12,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.7749089662122,
+                longitude: 6.093987840550934
             )
         ),
         ArenaPlace(
@@ -34,6 +54,16 @@ struct ArenaPlaces {
             )
         ),
         ArenaPlace(
+            id: "kennedypark-aachen",
+            name: "Kennedypark",
+            description: "Fight at Kennedypark.",
+            difficulty: 5,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.77362327080901,
+                longitude: 6.118821522963843
+            )
+        ),
+        ArenaPlace(
             id: "tivoli",
             name: "Tivoli",
             description: "Fight at Tivoli.",
@@ -41,16 +71,6 @@ struct ArenaPlaces {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.793209,
                 longitude: 6.098766
-            )
-        ),
-        ArenaPlace(
-            id: "end-game",
-            name: "End Game",
-            description: "Fight at End Game.",
-            difficulty: 10,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.788902,
-                longitude: 6.057804
             )
         ),
         ArenaPlace(
@@ -168,6 +188,17 @@ struct ArenaPlaces {
                 longitude: 6.15126339551919
             )
         ),
+        // Germany - Baesweiler
+        ArenaPlace(
+            id: "carl-alexander-park-baesweiler",
+            name: "Carl Alexander Park",
+            description: "Fight at Carl Alexander Park.",
+            difficulty: 8,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.91007859474693,
+                longitude: 6.157082809237758
+            )
+        ),
         // Netherlands - Vaals
         ArenaPlace(
             id: "kopermolen-vaals",
@@ -177,17 +208,6 @@ struct ArenaPlaces {
             coordinate: CLLocationCoordinate2D(
                 latitude: 50.77018024,
                 longitude: 6.019568
-            )
-        ),
-        // Netherlands - Kelmis
-        ArenaPlace(
-            id: "museum-vieille-montagne-kelmis",
-            name: "Museum Vieille Montagne",
-            description: "Fight at Museum Vieille Montagne.",
-            difficulty: 8,
-            coordinate: CLLocationCoordinate2D(
-                latitude: 50.71164696031438,
-                longitude: 6.008863804613452
             )
         ),
         // Netherlands - Bocholtz
@@ -221,7 +241,64 @@ struct ArenaPlaces {
                 latitude: 50.87186567128147,
                 longitude: 6.054543392257442
             )
+        ),
+        // Netherlands - Landgraaf
+        ArenaPlace(
+            id: "mondo-verde-landgraaf",
+            name: "Mondo Verde",
+            description: "Fight at Mondo Verde.",
+            difficulty: 6,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.88604346642915,
+                longitude: 6.032114652796148
+            )
+        ),
+        // Netherlands - Heerlen
+        ArenaPlace(
+            id: "meezenbroek-heerlen",
+            name: "Meezenbroek",
+            description: "Fight at Meezenbroek.",
+            difficulty: 6,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.88604346642915,
+                longitude: 6.032114652796148
+            )
+        ),
+        // Belgium - Kelmis
+        ArenaPlace(
+            id: "museum-vieille-montagne-kelmis",
+            name: "Museum Vieille Montagne",
+            description: "Fight at Museum Vieille Montagne.",
+            difficulty: 8,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.71164696031438,
+                longitude: 6.008863804613452
+            )
+        ),
+        // Belgium - Eynatten
+        ArenaPlace(
+            id: "eynatten-castle-eynatten",
+            name: "Eynatten Castle",
+            description: "Fight at Eynatten Castle.",
+            difficulty: 10,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.69323284390655,
+                longitude: 6.081618863961389
+            )
+        ),
+        // Belgium - Eupen
+        ArenaPlace(
+            id: "marian-column-eupen",
+            name: "Marian Column",
+            description: "Fight at Marian Column.",
+            difficulty: 9,
+            coordinate: CLLocationCoordinate2D(
+                latitude: 50.63087815444152,
+                longitude: 6.03162013413452
+            )
         )
+        
+        
         
     ]
 }
