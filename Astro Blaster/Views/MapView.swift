@@ -94,7 +94,8 @@ struct MapView: View {
                     Annotation(place.name, coordinate: place.coordinate) {
                         ArenaAnnotationView(
                             place: place,
-                            scale: zoomScale
+                            scale: zoomScale,
+                            userLocation: locationManager.userLocation
                         )
                         .onTapGesture {
                             selectedPlace = place
