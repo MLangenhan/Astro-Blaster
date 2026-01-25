@@ -90,6 +90,7 @@ struct MapView: View {
             // Map View without Default Points of Interest and in Dark Mode
             Map(position: $cameraPosition) {
                 
+                // Set all Arena Icons on the Map
                 ForEach(ArenaPlaces.all) { place in
                     Annotation(place.name, coordinate: place.coordinate) {
                         ArenaAnnotationView(

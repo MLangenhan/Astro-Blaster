@@ -131,7 +131,8 @@ struct ArenaDetails: View {
                 }
             }
         }
-        .padding() // Limit the Sheet Height
+        .padding()
+        // Limit the Sheet Height
         .presentationDetents([.height(250)])
         .fullScreenCover(isPresented: $showHighscores) {
             HighscoreView(scores: $arenaScores)
