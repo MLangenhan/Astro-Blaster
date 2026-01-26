@@ -77,6 +77,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     //Gets Called when the Scene gets Created
     override func didMove(to view: SKView) {
+        if size == .zero {
+            size = view.bounds.size
+        }
+        anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        
         //For Detecting Collisions
         physicsWorld.contactDelegate = self
         
