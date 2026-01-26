@@ -42,6 +42,7 @@ struct GameView: View {
 
     //Sets up Scene with Anchor-Point being the Middle of the Screen and the whole Screen being filled
     private func setupScene(size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
         scene.size = size
         scene.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         scene.scaleMode = .aspectFill
@@ -65,6 +66,9 @@ struct GameView: View {
                             .onEnded { _ in scene.beginDrag() }
                     )
                     .onAppear { setupScene(size: geo.size) }
+                    .onChange(of: geo.size) { _, newSize in
+                        setupScene(size: newSize)
+                    }
                 
                 //Pause Button at the top right
                 Button(action: {

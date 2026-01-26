@@ -45,6 +45,7 @@ struct MapView: View {
     // ID and name of currently selected Arena
     @State private var pendingArenaId: String? = nil
     @State private var pendingArenaName: String? = nil
+    @State private var shouldOpenGameAfterDismiss = false
     
     
     // MARK: - Initial Map Camera and User Position
@@ -174,7 +175,15 @@ struct MapView: View {
                 }
             }
             // Show a Bottom Sheet when a Place is Selected
-            .sheet(item: $selectedPlace) { place in
+            .sheet(item: $selectedPlace, onDismiss: {
+                if shouldOpenGameAfterDismiss {
+                    shouldOpenGameAfterDismiss = false
+                    DispatchQueue.main.async {
+                        // present the game view
+                        navigateToGameView = true
+                    }
+                }
+            }) { place in
                 ArenaDetails(
                     place: place,
                     userLocation: locationManager.userLocation,
@@ -185,12 +194,13 @@ struct MapView: View {
                         // Capture Arena Parameters before Dismissing the Sheet
                         pendingArenaId = place.id
                         pendingArenaName = place.name
-                        // Close Sheet
-                        selectedPlace = nil
                         // Arena Difficulty
                         arenaDifficulty = place.difficulty
-                        // Present the GameView
-                        navigateToGameView = true
+                        
+                        shouldOpenGameAfterDismiss = true
+                        
+                        // Close Sheet
+                        selectedPlace = nil
                     }
                 )
             }

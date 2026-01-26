@@ -327,6 +327,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
             return
         } //Check for Viewmodel and if not Game over or paused
         
+        guard size.width > 0, size.height > 0 else { return }
+        
         //Account for different Frame Rates
         let delta = computeDeltaTime(currentTime: currentTime)
         //Counts elapsed Time to Keep track of how long its been Played
@@ -437,8 +439,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         let minX = -size.width / 2 + half
         let maxX = size.width / 2 - half
         
+        let left = minX + 15
+        let right = maxX - 15
+        
+        let x: CGFloat
+        if left <= right {
+            x = .random(in: left...right)
+        } else {
+            x = 0
+        }
+        
         //Spawn at top of Screen with 15px right and left to not Spawn it partially Off-Screen
-        node.position = CGPoint(x: CGFloat.random(in: minX + 15 ... maxX - 15), y: size.height / 2 + node.size.height)
+        node.position = CGPoint(x: x, y: size.height / 2 + node.size.height)
         //Asteroid Stats
         node.userData = ["hp": asteroid.health, "speed": asteroid.speed]
         //Radial Body since the Assets are round-ish
