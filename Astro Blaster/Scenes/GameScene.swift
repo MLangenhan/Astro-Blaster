@@ -44,6 +44,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     private var nextUpgradeSpawnAt: TimeInterval?
     // Used for Unpausing the Game and Setting Speed back to original Speed
     private var recoverSpeed: CGFloat = 0
+    private var isReady = false
     
     // MARK: Active Upgrades
     private var overdriveRemaining: TimeInterval = 0
@@ -82,18 +83,32 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         }
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
-        //For Detecting Collisions
-        physicsWorld.contactDelegate = self
+        isReady = false
+        view.isPaused = true
         
-        //Needs to be done only once
-        playBackgroundMusic()
-        setupShip()
-        setupHUD()
-        setupOverdriveUI()
-        setupScore()
-        setupHearts()
-        layoutOverdriveUI()
-        setupBackground()
+        // preload these
+        let atlases = [SKTextureAtlas(named:"Enemies"), SKTextureAtlas(named: "Ship")]
+        SKTextureAtlas.preloadTextureAtlases(atlases) { [weak self] in
+            guard let self else { return }
+
+            DispatchQueue.main.async {
+                //For Detecting Collisions
+                self.physicsWorld.contactDelegate = self
+                
+                //Needs to be done only once
+                self.playBackgroundMusic()
+                self.setupShip()
+                self.setupHUD()
+                self.setupOverdriveUI()
+                self.setupScore()
+                self.setupHearts()
+                self.layoutOverdriveUI()
+                self.setupBackground()
+                
+                self.isReady = true
+                view.isPaused = false
+            }
+        }
     }
     
     //Consistency when Scene Size Changes
@@ -321,6 +336,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
     
     //Gets called once per Frame
     override func update(_ currentTime: TimeInterval) {
+        // only start if all the assets are loaded
+        guard isReady else { return }
         guard let vm = viewModel, !vm.isGameOver, !vm.isGamePaused else {
             lastUpdateTime = currentTime
             lastFire = currentTime - lastFireDelta
