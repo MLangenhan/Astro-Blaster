@@ -83,6 +83,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate 
         }
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
+        backgroundColor = .black
+        
         isReady = false
         view.isPaused = true
         
