@@ -42,7 +42,7 @@ struct ArenaDetails: View {
     // Distance has to be below or equal to 200 Meters
     private var isInRange: Bool {
         guard let distanceInMeters else { return false }
-        return distanceInMeters <= 200000000
+        return distanceInMeters <= 200
     }
     
     var body: some View {
