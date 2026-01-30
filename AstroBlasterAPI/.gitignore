@@ -1,0 +1,92 @@
+####################################
+# macOS
+####################################
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+####################################
+# Xcode
+####################################
+# Build products
+build/
+DerivedData/
+
+# User-specific Xcode settings
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+
+# Xcode workspace state
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+####################################
+# CocoaPods / Carthage (if used)
+####################################
+Pods/
+Carthage/Build/
+
+####################################
+# JavaScript / Node.js
+####################################
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime / cache
+.cache/
+.tmp/
+.temp/
+
+# Environment variables
+.env
+.env.*
+
+####################################
+# JavaScript tooling
+####################################
+.eslintcache
+.parcel-cache
+.vite/
+.next/
+.nuxt/
+.svelte-kit/
+
+####################################
+# IDEs / Editors
+####################################
+.vscode/
+.idea/
+*.swp
+
+####################################
+# Archives
+####################################
+*.zip
+*.tar
+*.tar.gz
+*.rar
