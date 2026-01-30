@@ -7,6 +7,7 @@
 
 import Foundation
 final class BackendService {
+    // MARK: - check here if problems with ngrok
     private let baseURL = URL(string: "https://auntlike-disquietedly-mariella.ngrok-free.dev")!
     
     //Returns all played Games in the Form of ScoreEntry of one Arena
