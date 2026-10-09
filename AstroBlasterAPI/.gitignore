@@ -90,3 +90,6 @@ pnpm-debug.log*
 *.tar
 *.tar.gz
 *.rar
+
+# Vorlage für die Umgebungsvariablen darf ins Repo
+!.env.example
