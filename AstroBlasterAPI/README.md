@@ -9,6 +9,11 @@
 - visit the website and make an account (free version is enough)
 - get your API key
 
+## Configure the database connection
+- copy `.env.example` to `.env` inside the root folder (AstroBlaster/AstroBlasterAPI)
+- paste your MongoDB Atlas connection string as `MONGODB_URI` (Atlas: Database > Connect > Drivers)
+- `.env` is ignored by git, never commit credentials
+
 ## how to start up
 - npm run dev inside the root folder (AstroBlaster/AstroBlasterAPI)
 - open a new terminal window and run ngrok http 3000 to expose localhost port 3000
